@@ -176,19 +176,18 @@ export default function ConnectionPage() {
                 </span>
 
                 <span
-                  className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
-                    isGatewayOnline === true
-                      ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
-                      : isGatewayOnline === false
+                  className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${isGatewayOnline === true
+                    ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
+                    : isGatewayOnline === false
                       ? "bg-rose-500/10 text-rose-400 border-rose-500/30"
                       : "bg-slate-800 text-slate-400 border-slate-700"
-                  }`}
+                    }`}
                 >
                   {isGatewayOnline === true
                     ? `Gateway Verified (${gatewayLatency}ms)`
                     : isGatewayOnline === false
-                    ? "Offline / Bad Auth"
-                    : "Not Tested"}
+                      ? "Offline / Bad Auth"
+                      : "Not Tested"}
                 </span>
               </div>
 
@@ -201,7 +200,7 @@ export default function ConnectionPage() {
                     required
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    placeholder="e.g. ABKUT3"
+                    placeholder="e.g. A1B2C3"
                     className="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2 text-white font-mono outline-none focus:border-emerald-500"
                   />
                   <span className="text-[10px] text-slate-500 mt-1 block">
@@ -232,44 +231,17 @@ export default function ConnectionPage() {
                   />
                 </div>
 
-                {/* Server URL & Mode */}
-                <div>
-                  <label className="text-slate-400 block mb-1">Gateway Base URL</label>
-                  <input
-                    type="text"
-                    value={baseUrl}
-                    onChange={(e) => setBaseUrl(e.target.value)}
-                    placeholder="https://api.sms-gate.app/3rdparty/v1 or http://192.168.1.50:8080"
-                    className="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2 text-white font-mono outline-none focus:border-emerald-500"
-                  />
-                  <div className="flex items-center gap-2 mt-1.5">
-                    <button
-                      type="button"
-                      onClick={() => setBaseUrl("https://api.sms-gate.app/3rdparty/v1")}
-                      className="text-[10px] text-emerald-400 hover:underline"
-                    >
-                      Set Cloud Server (api.sms-gate.app)
-                    </button>
-                    <span className="text-slate-600">&bull;</span>
-                    <button
-                      type="button"
-                      onClick={() => setBaseUrl("http://192.168.1.100:8080")}
-                      className="text-[10px] text-slate-400 hover:underline"
-                    >
-                      Set Local Wi-Fi Template
-                    </button>
-                  </div>
-                </div>
+
 
                 {/* Device ID and SIM Slot */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-slate-400 block mb-1">Device ID (Optional)</label>
+                    <label className="text-slate-400 block mb-1">Device ID </label>
                     <input
                       type="text"
                       value={deviceId}
                       onChange={(e) => setDeviceId(e.target.value)}
-                      placeholder="e.g. qXyoZUBLN2aA6Zs-VsqF1"
+                      placeholder="e.g. G3dhj75T987F3ertfgw&4"
                       className="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2 text-white font-mono outline-none focus:border-emerald-500"
                     />
                     <span className="text-[10px] text-slate-500 mt-1 block">
@@ -283,22 +255,20 @@ export default function ConnectionPage() {
                       <button
                         type="button"
                         onClick={() => setSimNumber(1)}
-                        className={`flex-1 py-2 rounded-xl font-bold border transition ${
-                          simNumber === 1
-                            ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40"
-                            : "bg-slate-950 border-slate-800 text-slate-400"
-                        }`}
+                        className={`flex-1 py-2 rounded-xl font-bold border transition ${simNumber === 1
+                          ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40"
+                          : "bg-slate-950 border-slate-800 text-slate-400"
+                          }`}
                       >
                         SIM 1
                       </button>
                       <button
                         type="button"
                         onClick={() => setSimNumber(2)}
-                        className={`flex-1 py-2 rounded-xl font-bold border transition ${
-                          simNumber === 2
-                            ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40"
-                            : "bg-slate-950 border-slate-800 text-slate-400"
-                        }`}
+                        className={`flex-1 py-2 rounded-xl font-bold border transition ${simNumber === 2
+                          ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40"
+                          : "bg-slate-950 border-slate-800 text-slate-400"
+                          }`}
                       >
                         SIM 2
                       </button>
@@ -321,11 +291,10 @@ export default function ConnectionPage() {
             {/* Diagnostics Output Card */}
             {diagnosticsResult && (
               <div
-                className={`p-4 rounded-2xl border text-xs space-y-2 ${
-                  diagnosticsResult.ok
-                    ? "bg-emerald-950/30 border-emerald-500/30 text-emerald-200"
-                    : "bg-rose-950/30 border-rose-500/30 text-rose-200"
-                }`}
+                className={`p-4 rounded-2xl border text-xs space-y-2 ${diagnosticsResult.ok
+                  ? "bg-emerald-950/30 border-emerald-500/30 text-emerald-200"
+                  : "bg-rose-950/30 border-rose-500/30 text-rose-200"
+                  }`}
               >
                 <div className="flex items-center gap-2">
                   {diagnosticsResult.ok ? (
@@ -355,11 +324,10 @@ export default function ConnectionPage() {
                 </span>
 
                 <span
-                  className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
-                    isMongoConnected
-                      ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
-                      : "bg-slate-800 text-slate-400 border-slate-700"
-                  }`}
+                  className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${isMongoConnected
+                    ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
+                    : "bg-slate-800 text-slate-400 border-slate-700"
+                    }`}
                 >
                   {isMongoConnected ? "Connected" : "Local Storage Mode"}
                 </span>
@@ -465,7 +433,7 @@ export default function ConnectionPage() {
                   <div>
                     <h4 className="font-bold text-white">Install Android Gateway</h4>
                     <p className="text-slate-400 mt-0.5 leading-relaxed">
-                      Download and install the APK on an Android device with an active Pakistani SIM card (Jazz, Zong, Telenor, or Ufone).
+                      Download and install the APK on an Android device with an active Pakistani SIM card (Jazz, Zong, Telenor, Onic, SCOM or Ufone). SMS Package
                     </p>
                   </div>
                 </div>
@@ -477,7 +445,7 @@ export default function ConnectionPage() {
                   <div>
                     <h4 className="font-bold text-white">Enable Cloud Server</h4>
                     <p className="text-slate-400 mt-0.5 leading-relaxed">
-                      Toggle <strong>Cloud Server: ON</strong> in the app. It will display a random Username and Password on your phone screen.
+                      Toggle <strong>Cloud Server: ON</strong> in the app. It will display a random Username, Password and Device ID on your phone screen.
                     </p>
                   </div>
                 </div>
