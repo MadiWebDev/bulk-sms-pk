@@ -50,6 +50,7 @@ interface SmsContextType {
   addTemplate: (tpl: TemplateRecord) => Promise<void>;
   deleteTemplate: (id: string) => Promise<void>;
   refreshTemplates: () => Promise<void>;
+  reseedTemplates: () => Promise<void>;
 }
 
 const STORAGE_SETTINGS_KEY = "smsgate_pro_config_v2";
@@ -236,7 +237,15 @@ export function SmsProvider({ children }: { children: React.ReactNode }) {
           if (storedContacts) setContacts(JSON.parse(storedContacts));
 
           const storedTpls = localStorage.getItem(STORAGE_TEMPLATES_KEY);
-          if (storedTpls) setTemplates(JSON.parse(storedTpls));
+          if (storedTpls) {
+            const parsed = JSON.parse(storedTpls);
+            if (Array.isArray(parsed)) {
+              const map = new Map<string, TemplateRecord>();
+              DEFAULT_TEMPLATES.forEach((t) => map.set(t.id, t));
+              parsed.forEach((t) => map.set(t.id, t));
+              setTemplates(Array.from(map.values()));
+            }
+          }
         } catch {
           // localStorage error handled
         }
@@ -477,6 +486,29 @@ export function SmsProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const reseedTemplates = useCallback(async () => {
+    try {
+      const res = await fetch("/api/templates", { method: "PUT" });
+      if (res.ok) {
+        await refreshTemplates();
+        await checkMongoStatus();
+        showToast("success", "All 125 templates successfully synced to MongoDB!", "Templates Synced");
+      } else {
+        showToast("warning", "Failed to sync templates to MongoDB.", "Sync Warning");
+      }
+    } catch {
+      showToast("danger", "Could not connect to sync templates.", "Network Error");
+    }
+  }, [refreshTemplates, checkMongoStatus, showToast]);
+
+  // Synchronize with database on initial mount
+  useEffect(() => {
+    refreshTemplates();
+    refreshContacts();
+    refreshCampaigns();
+    refreshMessages();
+  }, [refreshTemplates, refreshContacts, refreshCampaigns, refreshMessages]);
+
   const contactGroups = Array.from(new Set(contacts.map((c) => c.group).filter(Boolean)));
 
   return (
@@ -515,6 +547,7 @@ export function SmsProvider({ children }: { children: React.ReactNode }) {
         addTemplate,
         deleteTemplate,
         refreshTemplates,
+        reseedTemplates,
       }}
     >
       {children}

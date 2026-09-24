@@ -42,14 +42,35 @@ export interface ContactRecord {
   createdAt: string;
 }
 
+export type TemplateCategory =
+  | "promotional"
+  | "transactional"
+  | "support"
+  | "alerts"
+  | "reminders"
+  | "feedback"
+  | "hr"
+  | "events"
+  | "realestate"
+  | "banking"
+  | "promo"
+  | "txn"
+  | "alert"
+  | "reminder"
+  | "event"
+  | "bank"
+  | "custom"
+  | (string & {});
+
 export interface TemplateRecord {
   id: string;
   name: string;
-  category: "promotional" | "support" | "alerts" | "transactional" | "custom";
+  category: TemplateCategory;
   text: string;
   variables: string[];
   isPreset?: boolean;
 }
+
 
 export interface GatewayConfig {
   username: string;

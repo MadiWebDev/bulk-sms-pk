@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { useSms } from "@/lib/context/sms-context";
 import {
   validatePakistanPhone,
@@ -44,7 +45,7 @@ interface ProcessRow {
   id?: string;
 }
 
-export default function BulkSmsPage() {
+function BulkSmsInner() {
   const {
     gatewayConfig,
     contacts,
@@ -54,6 +55,22 @@ export default function BulkSmsPage() {
     addCampaign,
     showToast,
   } = useSms();
+  const searchParams = useSearchParams();
+
+  // Pre-fill template from URL ?templateId=...
+  const [loadedTemplateName, setLoadedTemplateName] = useState<string | null>(null);
+  useEffect(() => {
+    const templateId = searchParams.get("templateId");
+    if (templateId && templates.length > 0) {
+      const found = templates.find((t) => t.id === templateId);
+      if (found) {
+        setMessageTemplate(found.text);
+        setLoadedTemplateName(found.name);
+        showToast("info", `Template "${found.name}" loaded into Bulk SMS.`, "Template Loaded");
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, templates]);
 
   // Mode selection
   const [mode, setMode] = useState<BulkMode>("direct");
@@ -678,10 +695,15 @@ export default function BulkSmsPage() {
 
             {/* Message Template Editor */}
             <div className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-5 backdrop-blur-md space-y-3">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <label className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5 flex-wrap">
                   <Sparkles className="h-4 w-4 text-emerald-400" />
                   Campaign SMS Template
+                  {loadedTemplateName && (
+                    <span className="ml-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20 normal-case tracking-normal">
+                      📋 {loadedTemplateName}
+                    </span>
+                  )}
                 </label>
 
                 {/* Templates quick picker */}
@@ -689,9 +711,12 @@ export default function BulkSmsPage() {
                   <select
                     onChange={(e) => {
                       const t = templates.find((tpl) => tpl.id === e.target.value);
-                      if (t) setMessageTemplate(t.text);
+                      if (t) {
+                        setMessageTemplate(t.text);
+                        setLoadedTemplateName(t.name);
+                      }
                     }}
-                    className="rounded-lg bg-slate-800 border border-slate-700 px-2 py-1 text-xs text-slate-300 outline-none"
+                    className="rounded-lg bg-slate-800 border border-slate-700 px-2 py-1 text-xs text-slate-300 outline-none max-w-[220px]"
                     defaultValue=""
                   >
                     <option value="" disabled>
@@ -951,3 +976,12 @@ export default function BulkSmsPage() {
     </div>
   );
 }
+
+export default function BulkSmsPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-slate-950 flex items-center justify-center"><div className="text-slate-400 text-sm">Loading campaign...</div></div>}>
+      <BulkSmsInner />
+    </Suspense>
+  );
+}
+

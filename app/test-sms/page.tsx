@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { useSms } from "@/lib/context/sms-context";
 import { validatePakistanPhone } from "@/lib/pakistan-phone";
 import { calculateSMSAttributes, buildWhatsAppLink, appendUtmTags } from "@/lib/sms-text";
@@ -23,8 +24,9 @@ import {
   RefreshCw,
 } from "lucide-react";
 
-export default function TestSmsPage() {
-  const { gatewayConfig, addMessages, showToast, isGatewayOnline, testGatewayConnection } = useSms();
+function TestSmsInner() {
+  const { gatewayConfig, addMessages, showToast, isGatewayOnline, testGatewayConnection, templates } = useSms();
+  const searchParams = useSearchParams();
 
   // Recipient input
   const [phoneNumber, setPhoneNumber] = useState("03001234567");
@@ -32,10 +34,25 @@ export default function TestSmsPage() {
   const [messageText, setMessageText] = useState(
     "Salam! Exclusive discount: Enjoy FLAT 25% OFF on all items today only. Order now: https://store.pk/sale?utm_source=sms Code: PK25. Free delivery across Pakistan!"
   );
+  const [loadedTemplateName, setLoadedTemplateName] = useState<string | null>(null);
 
   const [selectedSim, setSelectedSim] = useState<number>(gatewayConfig.simNumber || 1);
   const [isSending, setIsSending] = useState(false);
   const [lastResponse, setLastResponse] = useState<any>(null);
+
+  // Pre-fill template from URL ?templateId=...
+  useEffect(() => {
+    const templateId = searchParams.get("templateId");
+    if (templateId && templates.length > 0) {
+      const found = templates.find((t) => t.id === templateId);
+      if (found) {
+        setMessageText(found.text);
+        setLoadedTemplateName(found.name);
+        showToast("info", `Template "${found.name}" loaded into Test SMS.`, "Template Loaded");
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, templates]);
 
   // Link & UTM generator modal/helper
   const [showUtmHelper, setShowUtmHelper] = useState(false);
@@ -259,10 +276,15 @@ export default function TestSmsPage() {
 
             {/* 2. Message Content */}
             <div className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-5 backdrop-blur-md space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
                 <label className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
                   <MessageSquare className="h-4 w-4 text-emerald-400" />
                   SMS Message Body
+                  {loadedTemplateName && (
+                    <span className="ml-2 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20 normal-case tracking-normal">
+                      📋 {loadedTemplateName}
+                    </span>
+                  )}
                 </label>
 
                 {/* Helper buttons */}
@@ -493,3 +515,12 @@ export default function TestSmsPage() {
     </div>
   );
 }
+
+export default function TestSmsPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-slate-950 flex items-center justify-center"><div className="text-slate-400 text-sm">Loading...</div></div>}>
+      <TestSmsInner />
+    </Suspense>
+  );
+}
+
