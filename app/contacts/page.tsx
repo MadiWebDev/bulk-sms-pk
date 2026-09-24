@@ -133,11 +133,19 @@ export default function ContactsPage() {
   };
 
   const openAddModal = () => {
+    if (!activeGatewayUsername) {
+      showToast("warning", "Select an active Android Gateway before adding contacts.", "No Gateway Selected");
+      return;
+    }
     resetForm();
     setFormMode("add");
   };
 
   const openEditModal = (c: ContactRecord) => {
+    if (!activeGatewayUsername) {
+      showToast("warning", "Select an active Android Gateway before editing contacts.", "No Gateway Selected");
+      return;
+    }
     setEditingContactId(c.id);
     setName(c.name);
     setPhone(c.nationalPhone || c.phone);
