@@ -29,7 +29,7 @@ function TestSmsInner() {
   const searchParams = useSearchParams();
 
   // Recipient input
-  const [phoneNumber, setPhoneNumber] = useState("03001234567");
+  const [phoneNumber, setPhoneNumber] = useState("");
   // Message input
   const [messageText, setMessageText] = useState(
     "Salam! Exclusive discount: Enjoy FLAT 25% OFF on all items today only. Order now: https://store.pk/sale?utm_source=sms Code: PK25. Free delivery across Pakistan!"
@@ -62,7 +62,7 @@ function TestSmsInner() {
 
   // WhatsApp link helper
   const [showWaHelper, setShowWaHelper] = useState(false);
-  const [waNumber, setWaNumber] = useState("03001234567");
+  const [waNumber, setWaNumber] = useState("");
   const [waPrefill, setWaPrefill] = useState("Salam! I want to inquire about my order.");
 
   // Validation

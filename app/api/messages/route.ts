@@ -6,32 +6,46 @@ export const runtime = "nodejs";
 
 export async function GET(req: NextRequest) {
   try {
-    const db = await getDatabase();
-    if (!db) {
-      return NextResponse.json({
-        storage: "local",
-        messages: [],
-        message: "MongoDB not connected. Storage handled locally in browser.",
-      });
-    }
-
     const { searchParams } = new URL(req.url);
+    const gatewayUsername = searchParams.get("gatewayUsername") || searchParams.get("userId") || "";
     const campaignId = searchParams.get("campaignId");
     const status = searchParams.get("status");
     const operator = searchParams.get("operator");
     const search = searchParams.get("search");
     const limit = Math.min(Number(searchParams.get("limit")) || 100, 500);
 
+    const db = await getDatabase();
+    if (!db) {
+      return NextResponse.json({
+        storage: "local",
+        messages: [],
+        gatewayUsername,
+        message: "MongoDB not connected. Storage handled locally in browser.",
+      });
+    }
+
     const query: Record<string, unknown> = {};
+
+    if (gatewayUsername) {
+      query.$or = [
+        { gatewayUsername: gatewayUsername },
+        { userId: gatewayUsername },
+        { gatewayUsername: { $exists: false }, userId: { $exists: false } },
+      ];
+    }
 
     if (campaignId) query.campaignId = campaignId;
     if (status && status !== "all") query.status = status;
     if (operator && operator !== "all") query.operator = operator;
     if (search) {
-      query.$or = [
-        { phone: { $regex: search, $options: "i" } },
-        { nationalPhone: { $regex: search, $options: "i" } },
-        { text: { $regex: search, $options: "i" } },
+      query.$and = [
+        {
+          $or: [
+            { phone: { $regex: search, $options: "i" } },
+            { nationalPhone: { $regex: search, $options: "i" } },
+            { text: { $regex: search, $options: "i" } },
+          ],
+        },
       ];
     }
 
@@ -44,6 +58,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
       storage: "mongodb",
+      gatewayUsername,
       messages,
       total: messages.length,
     });
@@ -55,24 +70,51 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    const { searchParams } = new URL(req.url);
+    const queryGateway = searchParams.get("gatewayUsername") || searchParams.get("userId") || "";
     const body = await req.json();
-    const items: MessageRecord[] = Array.isArray(body) ? body : [body];
+    let rawItems: Partial<MessageRecord>[] = [];
+    let payloadGateway = queryGateway;
 
-    if (items.length === 0) {
+    if (Array.isArray(body)) {
+      rawItems = body;
+    } else if (body && Array.isArray(body.items)) {
+      rawItems = body.items;
+      if (body.gatewayUsername) payloadGateway = body.gatewayUsername;
+      else if (body.userId) payloadGateway = body.userId;
+    } else if (body) {
+      rawItems = [body];
+      if (body.gatewayUsername) payloadGateway = body.gatewayUsername;
+      else if (body.userId) payloadGateway = body.userId;
+    }
+
+    const targetGateway = payloadGateway || "default";
+
+    if (rawItems.length === 0) {
       return NextResponse.json({ error: "No messages to store" }, { status: 400 });
     }
 
+    const items: MessageRecord[] = rawItems.map((item) => ({
+      ...item,
+      id: item.id || `msg_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      phone: item.phone || "",
+      text: item.text || "",
+      status: item.status || "queued",
+      timestamp: item.timestamp || new Date().toISOString(),
+      gatewayUsername: item.gatewayUsername || targetGateway,
+      userId: item.userId || targetGateway,
+    }));
+
     const db = await getDatabase();
     if (!db) {
-      // Acknowledge receipt even without Mongo
       return NextResponse.json({
         storage: "local",
         saved: 0,
+        gatewayUsername: targetGateway,
         message: "MongoDB not connected; item should be stored in client state.",
       });
     }
 
-    // Upsert or insert items
     const operations = items.map((item) => ({
       updateOne: {
         filter: { id: item.id },
@@ -86,6 +128,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       storage: "mongodb",
       success: true,
+      gatewayUsername: targetGateway,
       upsertedCount: result.upsertedCount,
       modifiedCount: result.modifiedCount,
     });
@@ -98,21 +141,31 @@ export async function POST(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   try {
     const db = await getDatabase();
-    if (!db) {
-      return NextResponse.json({ success: true, storage: "local" });
-    }
-
     const { searchParams } = new URL(req.url);
     const campaignId = searchParams.get("campaignId");
+    const gatewayUsername = searchParams.get("gatewayUsername") || searchParams.get("userId") || "";
 
-    if (campaignId) {
-      await db.collection("messages").deleteMany({ campaignId });
-    } else {
-      // Clear all
-      await db.collection("messages").deleteMany({});
+    if (!db) {
+      return NextResponse.json({ success: true, storage: "local", gatewayUsername });
     }
 
-    return NextResponse.json({ success: true, storage: "mongodb" });
+    const gatewayFilter = gatewayUsername
+      ? {
+          $or: [
+            { gatewayUsername: gatewayUsername },
+            { userId: gatewayUsername },
+            { gatewayUsername: { $exists: false }, userId: { $exists: false } },
+          ],
+        }
+      : {};
+
+    if (campaignId) {
+      await db.collection("messages").deleteMany({ campaignId, ...gatewayFilter });
+    } else {
+      await db.collection("messages").deleteMany(gatewayFilter);
+    }
+
+    return NextResponse.json({ success: true, storage: "mongodb", gatewayUsername });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "Failed to delete messages";
     return NextResponse.json({ error: msg }, { status: 500 });

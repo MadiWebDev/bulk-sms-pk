@@ -1,14 +1,27 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
-import { GatewayConfig, ToastItem, MessageRecord, CampaignRecord, ContactRecord, TemplateRecord } from "@/lib/types";
+import {
+  GatewayConfig,
+  ToastItem,
+  MessageRecord,
+  CampaignRecord,
+  ContactRecord,
+  TemplateRecord,
+} from "@/lib/types";
 import { DEFAULT_TEMPLATES } from "@/lib/default-templates";
 
 interface SmsContextType {
-  // Gateway Settings
+  // Active Gateway Credential (Each credential has its own contacts & history)
+  activeGatewayUsername: string;
+  savedGateways: GatewayConfig[];
+  setActiveGatewayUsername: (username: string) => void;
+  deleteSavedGateway: (username: string) => Promise<void>;
+
+  // Gateway Settings Form & Active State
   gatewayConfig: GatewayConfig;
   setGatewayConfig: (config: GatewayConfig) => void;
-  saveGatewayConfig: (config: GatewayConfig) => void;
+  saveGatewayConfig: (config: GatewayConfig) => Promise<{ ok: boolean; message: string; error?: string }>;
   envLoaded: boolean;
   maskedEnvUser: string;
   hasEnvCredentials: boolean;
@@ -29,22 +42,22 @@ interface SmsContextType {
   showToast: (type: "success" | "danger" | "warning" | "info" | "error", message: string, title?: string) => void;
   removeToast: (id: string) => void;
 
-  // Stored Data (Synced with DB / localStorage)
+  // Stored Data (Scoped to the active Gateway Credential)
   messages: MessageRecord[];
   addMessages: (newMessages: MessageRecord[]) => Promise<void>;
   updateMessageStatus: (id: string, status: MessageRecord["status"], state?: string) => void;
   clearMessages: (campaignId?: string) => Promise<void>;
-  refreshMessages: () => Promise<void>;
+  refreshMessages: (targetUsername?: string) => Promise<void>;
 
   campaigns: CampaignRecord[];
   addCampaign: (campaign: CampaignRecord) => Promise<void>;
-  refreshCampaigns: () => Promise<void>;
+  refreshCampaigns: (targetUsername?: string) => Promise<void>;
 
   contacts: ContactRecord[];
   contactGroups: string[];
   addContacts: (newContacts: ContactRecord[]) => Promise<void>;
   deleteContact: (id: string) => Promise<void>;
-  refreshContacts: () => Promise<void>;
+  refreshContacts: (targetUsername?: string) => Promise<void>;
 
   templates: TemplateRecord[];
   addTemplate: (tpl: TemplateRecord) => Promise<void>;
@@ -53,16 +66,14 @@ interface SmsContextType {
   reseedTemplates: () => Promise<void>;
 }
 
-const STORAGE_SETTINGS_KEY = "smsgate_pro_config_v2";
-const STORAGE_MESSAGES_KEY = "smsgate_pro_messages_v2";
-const STORAGE_CAMPAIGNS_KEY = "smsgate_pro_campaigns_v2";
-const STORAGE_CONTACTS_KEY = "smsgate_pro_contacts_v2";
-const STORAGE_TEMPLATES_KEY = "smsgate_pro_templates_v2";
-
 const SmsContext = createContext<SmsContextType | undefined>(undefined);
 
 export function SmsProvider({ children }: { children: React.ReactNode }) {
-  // Gateway config
+  // Active Gateway Credential Identifier
+  const [activeGatewayUsername, setActiveGatewayUsernameState] = useState<string>("");
+  const [savedGateways, setSavedGateways] = useState<GatewayConfig[]>([]);
+
+  // Current active Gateway Config
   const [gatewayConfig, setGatewayConfig] = useState<GatewayConfig>({
     username: "",
     password: "",
@@ -70,6 +81,7 @@ export function SmsProvider({ children }: { children: React.ReactNode }) {
     deviceId: "",
     simNumber: 1,
   });
+
   const [envLoaded, setEnvLoaded] = useState(false);
   const [maskedEnvUser, setMaskedEnvUser] = useState("");
   const [hasEnvCredentials, setHasEnvCredentials] = useState(false);
@@ -90,7 +102,7 @@ export function SmsProvider({ children }: { children: React.ReactNode }) {
   // Toasts
   const [toasts, setToasts] = useState<ToastItem[]>([]);
 
-  // Stored state
+  // Gateway Scoped State
   const [messages, setMessages] = useState<MessageRecord[]>([]);
   const [campaigns, setCampaigns] = useState<CampaignRecord[]>([]);
   const [contacts, setContacts] = useState<ContactRecord[]>([]);
@@ -134,9 +146,7 @@ export function SmsProvider({ children }: { children: React.ReactNode }) {
       const data = await res.json();
       if (data.connected) {
         setIsMongoConnected(true);
-        if (data.stats) {
-          setMongoStats(data.stats);
-        }
+        if (data.stats) setMongoStats(data.stats);
       } else {
         setIsMongoConnected(false);
       }
@@ -145,7 +155,247 @@ export function SmsProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Test Gateway Connection
+  // Refresh messages scoped to the active gateway credential
+  const refreshMessages = useCallback(async (targetUsername?: string) => {
+    const gw = targetUsername !== undefined ? targetUsername : activeGatewayUsername;
+    try {
+      const query = gw ? `?gatewayUsername=${encodeURIComponent(gw)}&limit=200` : "?limit=200";
+      const res = await fetch(`/api/messages${query}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.messages)) {
+          setMessages(data.messages);
+          if (typeof window !== "undefined" && gw) {
+            localStorage.setItem(`smsgate_pro_messages_v2_${gw}`, JSON.stringify(data.messages));
+          }
+        }
+      }
+    } catch {
+      // Kept local
+    }
+  }, [activeGatewayUsername]);
+
+  // Refresh contacts scoped to the active gateway credential
+  const refreshContacts = useCallback(async (targetUsername?: string) => {
+    const gw = targetUsername !== undefined ? targetUsername : activeGatewayUsername;
+    try {
+      const query = gw ? `?gatewayUsername=${encodeURIComponent(gw)}` : "";
+      const res = await fetch(`/api/contacts${query}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.contacts)) {
+          setContacts(data.contacts);
+          if (typeof window !== "undefined" && gw) {
+            localStorage.setItem(`smsgate_pro_contacts_v2_${gw}`, JSON.stringify(data.contacts));
+          }
+        }
+      }
+    } catch {
+      // Kept local
+    }
+  }, [activeGatewayUsername]);
+
+  // Refresh campaigns scoped to the active gateway credential
+  const refreshCampaigns = useCallback(async (targetUsername?: string) => {
+    const gw = targetUsername !== undefined ? targetUsername : activeGatewayUsername;
+    try {
+      const query = gw ? `?gatewayUsername=${encodeURIComponent(gw)}` : "";
+      const res = await fetch(`/api/campaigns${query}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.campaigns)) {
+          setCampaigns(data.campaigns);
+          if (typeof window !== "undefined" && gw) {
+            localStorage.setItem(`smsgate_pro_campaigns_v2_${gw}`, JSON.stringify(data.campaigns));
+          }
+        }
+      }
+    } catch {
+      // Kept local
+    }
+  }, [activeGatewayUsername]);
+
+  // Refresh templates
+  const refreshTemplates = useCallback(async () => {
+    try {
+      const res = await fetch("/api/templates");
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.templates)) {
+          setTemplates(data.templates);
+        }
+      }
+    } catch {
+      // Local
+    }
+  }, []);
+
+  // Fetch gateway configs from server
+  const loadGatewayConfigs = useCallback(async (preferredUsername?: string) => {
+    try {
+      const query = preferredUsername ? `?username=${encodeURIComponent(preferredUsername)}` : "";
+      const res = await fetch(`/api/sms/config${query}`, { cache: "no-store" });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.savedGateways)) {
+          setSavedGateways(data.savedGateways);
+        }
+
+        if (data.activeGateway) {
+          const active = data.activeGateway;
+          setGatewayConfig({
+            username: active.username || "",
+            password: active.password || "",
+            baseUrl: active.baseUrl || "https://api.sms-gate.app/3rdparty/v1",
+            deviceId: active.deviceId || "",
+            simNumber: active.simNumber || 1,
+            isVerified: active.isVerified ?? false,
+            name: active.name,
+          });
+
+          setActiveGatewayUsernameState(active.username || "");
+          if (active.maskedUsername) {
+            setMaskedEnvUser(active.maskedUsername);
+            setHasEnvCredentials(Boolean(data.isConfigured));
+          }
+        }
+      }
+    } catch {
+      /* ignore */
+    } finally {
+      setEnvLoaded(true);
+    }
+  }, []);
+
+  // Switch Active Gateway Credential
+  const setActiveGatewayUsername = useCallback(
+    (username: string) => {
+      setActiveGatewayUsernameState(username);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("smsgate_active_gateway_username", username);
+      }
+
+      // Find config in savedGateways or fetch from server
+      const found = savedGateways.find((g) => g.username === username);
+      if (found) {
+        setGatewayConfig((prev) => ({
+          ...prev,
+          username: found.username,
+          baseUrl: found.baseUrl,
+          deviceId: found.deviceId || "",
+          simNumber: found.simNumber || 1,
+          isVerified: found.isVerified,
+          name: found.name,
+        }));
+      }
+
+      // Re-load data for this specific gateway credential
+      loadGatewayConfigs(username);
+      refreshContacts(username);
+      refreshMessages(username);
+      refreshCampaigns(username);
+    },
+    [savedGateways, loadGatewayConfigs, refreshContacts, refreshMessages, refreshCampaigns]
+  );
+
+  // Delete a saved gateway credential
+  const deleteSavedGateway = useCallback(
+    async (username: string) => {
+      try {
+        const res = await fetch(`/api/sms/config?username=${encodeURIComponent(username)}`, {
+          method: "DELETE",
+        });
+        if (res.ok) {
+          setSavedGateways((prev) => prev.filter((g) => g.username !== username));
+          showToast("info", `Gateway credential "${username}" removed from database.`, "Gateway Deleted");
+          if (activeGatewayUsername === username) {
+            loadGatewayConfigs();
+          }
+        }
+      } catch {
+        showToast("danger", "Failed to delete gateway credential.", "Error");
+      }
+    },
+    [activeGatewayUsername, loadGatewayConfigs, showToast]
+  );
+
+  // Save Gateway config with test-first requirement
+  const saveGatewayConfig = useCallback(
+    async (newConfig: GatewayConfig): Promise<{ ok: boolean; message: string; error?: string }> => {
+      setIsCheckingGateway(true);
+
+      try {
+        // Post to /api/sms/config which tests FIRST before saving to MongoDB
+        const res = await fetch("/api/sms/config", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(newConfig),
+        });
+
+        const data = await res.json();
+
+        if (res.ok && data.ok) {
+          const verifiedConfig: GatewayConfig = {
+            ...newConfig,
+            isVerified: true,
+          };
+          setGatewayConfig(verifiedConfig);
+          setActiveGatewayUsernameState(newConfig.username);
+          setIsGatewayOnline(true);
+          setGatewayLatency(data.latency || null);
+
+          if (typeof window !== "undefined") {
+            localStorage.setItem("smsgate_active_gateway_username", newConfig.username);
+            localStorage.setItem(`smsgate_pro_config_v2_${newConfig.username}`, JSON.stringify(verifiedConfig));
+          }
+
+          // Update saved gateways list in local state
+          setSavedGateways((prev) => {
+            const filtered = prev.filter((g) => g.username !== newConfig.username);
+            return [
+              {
+                username: newConfig.username,
+                name: newConfig.name || `Android (${newConfig.username})`,
+                baseUrl: newConfig.baseUrl,
+                deviceId: newConfig.deviceId,
+                simNumber: newConfig.simNumber,
+                isVerified: true,
+                updatedAt: new Date().toISOString(),
+              },
+              ...filtered,
+            ];
+          });
+
+          // Refresh contacts and history for this gateway credential
+          refreshContacts(newConfig.username);
+          refreshMessages(newConfig.username);
+          refreshCampaigns(newConfig.username);
+
+          showToast(
+            "success",
+            data.message || `Credentials "${newConfig.username}" tested & saved in database!`,
+            "Saved & Verified"
+          );
+          return { ok: true, message: data.message };
+        } else {
+          setIsGatewayOnline(false);
+          const errorText = data.error || "Gateway test failed. Credentials were NOT saved to database.";
+          showToast("danger", errorText, "Gateway Test Failed");
+          return { ok: false, message: errorText, error: errorText };
+        }
+      } catch (err: unknown) {
+        setIsGatewayOnline(false);
+        const errorText = err instanceof Error ? err.message : "Network error testing gateway credentials";
+        showToast("danger", errorText, "Connection Error");
+        return { ok: false, message: errorText, error: errorText };
+      } finally {
+        setIsCheckingGateway(false);
+      }
+    },
+    [refreshContacts, refreshMessages, refreshCampaigns, showToast]
+  );
+
+  // Test Gateway Connection standalone
   const testGatewayConnection = useCallback(
     async (customConfig?: GatewayConfig): Promise<{ ok: boolean; message: string }> => {
       const cfg = customConfig || gatewayConfig;
@@ -191,274 +441,161 @@ export function SmsProvider({ children }: { children: React.ReactNode }) {
     [gatewayConfig, showToast]
   );
 
-  // Load Initial Configuration from Env and Local Storage
-  useEffect(() => {
-    async function init() {
-      // 1. Fetch server env config
-      let envCreds = false;
-      try {
-        const res = await fetch("/api/sms/config");
-        if (res.ok) {
-          const data = await res.json();
-          if (data.isConfigured) {
-            envCreds = true;
-            setHasEnvCredentials(true);
-            setMaskedEnvUser(data.maskedUsername || "");
-            setGatewayConfig((prev) => ({
-              ...prev,
-              username: prev.username || data.maskedUsername || "",
-              baseUrl: prev.baseUrl || data.baseUrl,
-              deviceId: prev.deviceId || data.deviceId || "",
-              simNumber: data.simNumber || 1,
-            }));
-          }
-        }
-      } catch {
-        // Ignore
-      }
-      setEnvLoaded(true);
-
-      // 2. Read LocalStorage overrides
-      if (typeof window !== "undefined") {
-        try {
-          const storedCfg = localStorage.getItem(STORAGE_SETTINGS_KEY);
-          if (storedCfg) {
-            const parsed = JSON.parse(storedCfg);
-            setGatewayConfig((prev) => ({ ...prev, ...parsed }));
-          }
-
-          const storedMsgs = localStorage.getItem(STORAGE_MESSAGES_KEY);
-          if (storedMsgs) setMessages(JSON.parse(storedMsgs));
-
-          const storedCampaigns = localStorage.getItem(STORAGE_CAMPAIGNS_KEY);
-          if (storedCampaigns) setCampaigns(JSON.parse(storedCampaigns));
-
-          const storedContacts = localStorage.getItem(STORAGE_CONTACTS_KEY);
-          if (storedContacts) setContacts(JSON.parse(storedContacts));
-
-          const storedTpls = localStorage.getItem(STORAGE_TEMPLATES_KEY);
-          if (storedTpls) {
-            const parsed = JSON.parse(storedTpls);
-            if (Array.isArray(parsed)) {
-              const map = new Map<string, TemplateRecord>();
-              DEFAULT_TEMPLATES.forEach((t) => map.set(t.id, t));
-              parsed.forEach((t) => map.set(t.id, t));
-              setTemplates(Array.from(map.values()));
-            }
-          }
-        } catch {
-          // localStorage error handled
-        }
-      }
-
-      // 3. Check MongoDB
-      await checkMongoStatus();
-    }
-
-    init();
-  }, [checkMongoStatus]);
-
-  // Persist Gateway config
-  const saveGatewayConfig = useCallback((newConfig: GatewayConfig) => {
-    setGatewayConfig(newConfig);
-    if (typeof window !== "undefined") {
-      localStorage.setItem(STORAGE_SETTINGS_KEY, JSON.stringify(newConfig));
-    }
-  }, []);
-
-  // Refresh messages from DB or keep local
-  const refreshMessages = useCallback(async () => {
-    try {
-      const res = await fetch("/api/messages?limit=200");
-      if (res.ok) {
-        const data = await res.json();
-        if (data.storage === "mongodb" && Array.isArray(data.messages)) {
-          setMessages(data.messages);
-          if (typeof window !== "undefined") {
-            localStorage.setItem(STORAGE_MESSAGES_KEY, JSON.stringify(data.messages));
-          }
-        }
-      }
-    } catch {
-      // Keep local
-    }
-  }, []);
-
-  // Add messages
+  // Add messages scoped to the active gateway credential
   const addMessages = useCallback(
     async (newMessages: MessageRecord[]) => {
+      const gw = activeGatewayUsername || "default";
+      const scopedMessages = newMessages.map((m) => ({
+        ...m,
+        gatewayUsername: m.gatewayUsername || gw,
+        userId: m.userId || gw,
+      }));
+
       setMessages((prev) => {
-        const combined = [...newMessages, ...prev].slice(0, 1000);
-        if (typeof window !== "undefined") {
-          localStorage.setItem(STORAGE_MESSAGES_KEY, JSON.stringify(combined));
+        const combined = [...scopedMessages, ...prev].slice(0, 1000);
+        if (typeof window !== "undefined" && gw) {
+          localStorage.setItem(`smsgate_pro_messages_v2_${gw}`, JSON.stringify(combined));
         }
         return combined;
       });
 
-      // Sync to MongoDB in background
       try {
-        await fetch("/api/messages", {
+        await fetch(`/api/messages?gatewayUsername=${encodeURIComponent(gw)}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(newMessages),
+          body: JSON.stringify({ gatewayUsername: gw, items: scopedMessages }),
         });
       } catch {
-        // Offline fallback maintained
+        // Offline fallback
       }
     },
-    []
+    [activeGatewayUsername]
   );
 
-  const updateMessageStatus = useCallback((id: string, status: MessageRecord["status"], state?: string) => {
-    setMessages((prev) => {
-      const updated = prev.map((m) => (m.id === id ? { ...m, status, state: state || m.error } : m));
-      if (typeof window !== "undefined") {
-        localStorage.setItem(STORAGE_MESSAGES_KEY, JSON.stringify(updated));
-      }
-      return updated;
-    });
-  }, []);
-
-  const clearMessages = useCallback(async (campaignId?: string) => {
-    setMessages((prev) => {
-      const filtered = campaignId ? prev.filter((m) => m.campaignId !== campaignId) : [];
-      if (typeof window !== "undefined") {
-        localStorage.setItem(STORAGE_MESSAGES_KEY, JSON.stringify(filtered));
-      }
-      return filtered;
-    });
-
-    try {
-      const url = campaignId ? `/api/messages?campaignId=${encodeURIComponent(campaignId)}` : "/api/messages";
-      await fetch(url, { method: "DELETE" });
-    } catch {
-      // Handled
-    }
-  }, []);
-
-  // Campaigns
-  const refreshCampaigns = useCallback(async () => {
-    try {
-      const res = await fetch("/api/campaigns");
-      if (res.ok) {
-        const data = await res.json();
-        if (data.storage === "mongodb" && Array.isArray(data.campaigns)) {
-          setCampaigns(data.campaigns);
-          if (typeof window !== "undefined") {
-            localStorage.setItem(STORAGE_CAMPAIGNS_KEY, JSON.stringify(data.campaigns));
-          }
+  const updateMessageStatus = useCallback(
+    (id: string, status: MessageRecord["status"], state?: string) => {
+      setMessages((prev) => {
+        const updated = prev.map((m) => (m.id === id ? { ...m, status, error: state || m.error } : m));
+        if (typeof window !== "undefined" && activeGatewayUsername) {
+          localStorage.setItem(`smsgate_pro_messages_v2_${activeGatewayUsername}`, JSON.stringify(updated));
         }
-      }
-    } catch {
-      // Kept local
-    }
-  }, []);
-
-  const addCampaign = useCallback(async (campaign: CampaignRecord) => {
-    setCampaigns((prev) => {
-      const updated = [campaign, ...prev];
-      if (typeof window !== "undefined") {
-        localStorage.setItem(STORAGE_CAMPAIGNS_KEY, JSON.stringify(updated));
-      }
-      return updated;
-    });
-
-    try {
-      await fetch("/api/campaigns", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(campaign),
+        return updated;
       });
-    } catch {
-      // Maintained local
-    }
-  }, []);
+    },
+    [activeGatewayUsername]
+  );
 
-  // Contacts
-  const refreshContacts = useCallback(async () => {
-    try {
-      const res = await fetch("/api/contacts");
-      if (res.ok) {
-        const data = await res.json();
-        if (data.storage === "mongodb" && Array.isArray(data.contacts)) {
-          setContacts(data.contacts);
-          if (typeof window !== "undefined") {
-            localStorage.setItem(STORAGE_CONTACTS_KEY, JSON.stringify(data.contacts));
-          }
+  const clearMessages = useCallback(
+    async (campaignId?: string) => {
+      const gw = activeGatewayUsername;
+      setMessages((prev) => {
+        const filtered = campaignId ? prev.filter((m) => m.campaignId !== campaignId) : [];
+        if (typeof window !== "undefined" && gw) {
+          localStorage.setItem(`smsgate_pro_messages_v2_${gw}`, JSON.stringify(filtered));
         }
-      }
-    } catch {
-      // Kept local
-    }
-  }, []);
-
-  const addContacts = useCallback(async (newContacts: ContactRecord[]) => {
-    setContacts((prev) => {
-      const map = new Map<string, ContactRecord>();
-      prev.forEach((c) => map.set(c.phone, c));
-      newContacts.forEach((c) => map.set(c.phone, c));
-      const combined = Array.from(map.values());
-      if (typeof window !== "undefined") {
-        localStorage.setItem(STORAGE_CONTACTS_KEY, JSON.stringify(combined));
-      }
-      return combined;
-    });
-
-    try {
-      await fetch("/api/contacts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newContacts),
+        return filtered;
       });
-    } catch {
-      // Local maintained
-    }
-  }, []);
 
-  const deleteContact = useCallback(async (id: string) => {
-    setContacts((prev) => {
-      const filtered = prev.filter((c) => c.id !== id);
-      if (typeof window !== "undefined") {
-        localStorage.setItem(STORAGE_CONTACTS_KEY, JSON.stringify(filtered));
+      try {
+        const query = campaignId
+          ? `?gatewayUsername=${encodeURIComponent(gw)}&campaignId=${encodeURIComponent(campaignId)}`
+          : `?gatewayUsername=${encodeURIComponent(gw)}`;
+        await fetch(`/api/messages${query}`, { method: "DELETE" });
+      } catch {
+        /* ignore */
       }
-      return filtered;
-    });
+    },
+    [activeGatewayUsername]
+  );
 
-    try {
-      await fetch(`/api/contacts?id=${encodeURIComponent(id)}`, { method: "DELETE" });
-    } catch {
-      // Handled
-    }
-  }, []);
+  // Add campaign scoped to active gateway
+  const addCampaign = useCallback(
+    async (campaign: CampaignRecord) => {
+      const gw = activeGatewayUsername || "default";
+      const scopedCampaign = { ...campaign, gatewayUsername: gw, userId: gw };
+
+      setCampaigns((prev) => {
+        const updated = [scopedCampaign, ...prev];
+        if (typeof window !== "undefined" && gw) {
+          localStorage.setItem(`smsgate_pro_campaigns_v2_${gw}`, JSON.stringify(updated));
+        }
+        return updated;
+      });
+
+      try {
+        await fetch(`/api/campaigns?gatewayUsername=${encodeURIComponent(gw)}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(scopedCampaign),
+        });
+      } catch {
+        // Maintained local
+      }
+    },
+    [activeGatewayUsername]
+  );
+
+  // Add contacts scoped to active gateway
+  const addContacts = useCallback(
+    async (newContacts: ContactRecord[]) => {
+      const gw = activeGatewayUsername || "default";
+      const scopedContacts = newContacts.map((c) => ({
+        ...c,
+        gatewayUsername: c.gatewayUsername || gw,
+        userId: c.userId || gw,
+      }));
+
+      setContacts((prev) => {
+        const map = new Map<string, ContactRecord>();
+        prev.forEach((c) => map.set(c.phone, c));
+        scopedContacts.forEach((c) => map.set(c.phone, c));
+        const combined = Array.from(map.values());
+        if (typeof window !== "undefined" && gw) {
+          localStorage.setItem(`smsgate_pro_contacts_v2_${gw}`, JSON.stringify(combined));
+        }
+        return combined;
+      });
+
+      try {
+        await fetch(`/api/contacts?gatewayUsername=${encodeURIComponent(gw)}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ gatewayUsername: gw, items: scopedContacts }),
+        });
+      } catch {
+        // Local maintained
+      }
+    },
+    [activeGatewayUsername]
+  );
+
+  // Delete contact scoped to active gateway
+  const deleteContact = useCallback(
+    async (id: string) => {
+      const gw = activeGatewayUsername;
+      setContacts((prev) => {
+        const filtered = prev.filter((c) => c.id !== id);
+        if (typeof window !== "undefined" && gw) {
+          localStorage.setItem(`smsgate_pro_contacts_v2_${gw}`, JSON.stringify(filtered));
+        }
+        return filtered;
+      });
+
+      try {
+        await fetch(
+          `/api/contacts?id=${encodeURIComponent(id)}&gatewayUsername=${encodeURIComponent(gw)}`,
+          { method: "DELETE" }
+        );
+      } catch {
+        /* ignore */
+      }
+    },
+    [activeGatewayUsername]
+  );
 
   // Templates
-  const refreshTemplates = useCallback(async () => {
-    try {
-      const res = await fetch("/api/templates");
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data.templates)) {
-          setTemplates(data.templates);
-          if (typeof window !== "undefined") {
-            localStorage.setItem(STORAGE_TEMPLATES_KEY, JSON.stringify(data.templates));
-          }
-        }
-      }
-    } catch {
-      // Local
-    }
-  }, []);
-
   const addTemplate = useCallback(async (tpl: TemplateRecord) => {
-    setTemplates((prev) => {
-      const filtered = prev.filter((t) => t.id !== tpl.id);
-      const updated = [tpl, ...filtered];
-      if (typeof window !== "undefined") {
-        localStorage.setItem(STORAGE_TEMPLATES_KEY, JSON.stringify(updated));
-      }
-      return updated;
-    });
-
+    setTemplates((prev) => [tpl, ...prev.filter((t) => t.id !== tpl.id)]);
     try {
       await fetch("/api/templates", {
         method: "POST",
@@ -471,14 +608,7 @@ export function SmsProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const deleteTemplate = useCallback(async (id: string) => {
-    setTemplates((prev) => {
-      const filtered = prev.filter((t) => t.id !== id);
-      if (typeof window !== "undefined") {
-        localStorage.setItem(STORAGE_TEMPLATES_KEY, JSON.stringify(filtered));
-      }
-      return filtered;
-    });
-
+    setTemplates((prev) => prev.filter((t) => t.id !== id));
     try {
       await fetch(`/api/templates?id=${encodeURIComponent(id)}`, { method: "DELETE" });
     } catch {
@@ -492,28 +622,46 @@ export function SmsProvider({ children }: { children: React.ReactNode }) {
       if (res.ok) {
         await refreshTemplates();
         await checkMongoStatus();
-        showToast("success", "All 125 templates successfully synced to MongoDB!", "Templates Synced");
-      } else {
-        showToast("warning", "Failed to sync templates to MongoDB.", "Sync Warning");
+        showToast("success", "Templates successfully synced to MongoDB!", "Templates Synced");
       }
     } catch {
       showToast("danger", "Could not connect to sync templates.", "Network Error");
     }
   }, [refreshTemplates, checkMongoStatus, showToast]);
 
-  // Synchronize with database on initial mount
+  // Initial load on mount
   useEffect(() => {
+    let savedGw = "";
+    if (typeof window !== "undefined") {
+      try {
+        savedGw = localStorage.getItem("smsgate_active_gateway_username") || "";
+      } catch {
+        /* ignore */
+      }
+    }
+    loadGatewayConfigs(savedGw);
+    checkMongoStatus();
     refreshTemplates();
-    refreshContacts();
-    refreshCampaigns();
-    refreshMessages();
-  }, [refreshTemplates, refreshContacts, refreshCampaigns, refreshMessages]);
+  }, [loadGatewayConfigs, checkMongoStatus, refreshTemplates]);
+
+  // Whenever activeGatewayUsername changes, reload contacts & messages
+  useEffect(() => {
+    if (activeGatewayUsername) {
+      refreshContacts(activeGatewayUsername);
+      refreshMessages(activeGatewayUsername);
+      refreshCampaigns(activeGatewayUsername);
+    }
+  }, [activeGatewayUsername, refreshContacts, refreshMessages, refreshCampaigns]);
 
   const contactGroups = Array.from(new Set(contacts.map((c) => c.group).filter(Boolean)));
 
   return (
     <SmsContext.Provider
       value={{
+        activeGatewayUsername,
+        savedGateways,
+        setActiveGatewayUsername,
+        deleteSavedGateway,
         gatewayConfig,
         setGatewayConfig,
         saveGatewayConfig,

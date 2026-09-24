@@ -20,6 +20,8 @@ import {
   ChevronDown,
 } from "lucide-react";
 
+import { GatewaySwitcher } from "@/components/gateway-switcher";
+
 export function Navigation() {
   const pathname = usePathname();
   const {
@@ -120,17 +122,16 @@ export function Navigation() {
             })}
           </nav>
 
-          {/* Right Status Actions (md and up) */}
-          <div className="hidden md:flex items-center gap-2 shrink-0">
-          
-           
+          {/* Right Status Actions */}
+          <div className="flex items-center gap-2 shrink-0">
+            <GatewaySwitcher />
 
             {/* Gateway Status & Quick Ping */}
             <button
               type="button"
               onClick={() => testGatewayConnection()}
               disabled={isCheckingGateway}
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition-all whitespace-nowrap ${
+              className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold border transition-all whitespace-nowrap ${
                 isGatewayOnline === true
                   ? "bg-emerald-950/50 text-emerald-300 border-emerald-500/40 hover:bg-emerald-900/40"
                   : isGatewayOnline === false

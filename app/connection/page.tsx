@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSms } from "@/lib/context/sms-context";
 import { GatewayConfig } from "@/lib/types";
 import {
@@ -24,6 +24,10 @@ import {
 
 export default function ConnectionPage() {
   const {
+    activeGatewayUsername,
+    savedGateways,
+    setActiveGatewayUsername,
+    deleteSavedGateway,
     gatewayConfig,
     saveGatewayConfig,
     isGatewayOnline,
@@ -49,6 +53,16 @@ export default function ConnectionPage() {
   const [deviceId, setDeviceId] = useState(gatewayConfig.deviceId || "");
   const [simNumber, setSimNumber] = useState<number>(gatewayConfig.simNumber || 1);
   const [showPassword, setShowPassword] = useState(false);
+  const [isSavingGateway, setIsSavingGateway] = useState(false);
+
+  // Sync form state when user changes or gatewayConfig updates
+  useEffect(() => {
+    setUsername(gatewayConfig.username || "");
+    setPassword(gatewayConfig.password || "");
+    setBaseUrl(gatewayConfig.baseUrl || "https://api.sms-gate.app/3rdparty/v1");
+    setDeviceId(gatewayConfig.deviceId || "");
+    setSimNumber(gatewayConfig.simNumber || 1);
+  }, [gatewayConfig]);
 
   // Diagnostics test output
   const [diagnosticsResult, setDiagnosticsResult] = useState<{
@@ -59,19 +73,31 @@ export default function ConnectionPage() {
 
   const [isTestingDb, setIsTestingDb] = useState(false);
 
-  // Save Gateway Settings
-  const handleSaveGateway = (e: React.FormEvent) => {
+  // Save Gateway Settings (First Tests, then saves in DB for active user)
+  const handleSaveGateway = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSavingGateway(true);
+    setDiagnosticsResult(null);
+
     const updated: GatewayConfig = {
       username: username.trim(),
       password: password.trim(),
       baseUrl: baseUrl.trim() || "https://api.sms-gate.app/3rdparty/v1",
       deviceId: deviceId.trim(),
       simNumber,
+      name: `Android (${username.trim()})`,
     };
 
-    saveGatewayConfig(updated);
-    showToast("success", "SMS Gateway connection settings saved locally!", "Settings Saved");
+    const start = performance.now();
+    const result = await saveGatewayConfig(updated);
+    const elapsed = Math.round(performance.now() - start);
+
+    setIsSavingGateway(false);
+    setDiagnosticsResult({
+      ok: result.ok,
+      message: result.ok ? result.message : result.error || result.message,
+      latency: result.ok ? elapsed : undefined,
+    });
   };
 
   // Run Gateway Ping & Diagnostics
@@ -84,7 +110,6 @@ export default function ConnectionPage() {
       simNumber,
     };
 
-    saveGatewayConfig(updated);
     const start = performance.now();
     const res = await testGatewayConnection(updated);
     const elapsed = Math.round(performance.now() - start);
@@ -167,7 +192,91 @@ export default function ConnectionPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* Left: Gateway Settings Form (7 cols) */}
           <div className="lg:col-span-7 space-y-6">
-            {/* 1. Android Gateway Settings */}
+            {/* Saved Gateway Credentials / Accounts */}
+            {savedGateways.length > 0 && (
+              <div className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-5 backdrop-blur-md space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+                    <Smartphone className="h-4 w-4 text-emerald-400" />
+                    Saved Gateway Credentials in Database
+                  </span>
+                  <span className="text-[10px] text-slate-400 font-mono">
+                    {savedGateways.length} Credential{savedGateways.length > 1 ? "s" : ""}
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-400">
+                  Select a gateway credential below to view and manage its own contact list and message history.
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                  {savedGateways.map((g) => {
+                    const isActive = g.username === activeGatewayUsername;
+                    return (
+                      <div
+                        key={g.username}
+                        className={`p-3 rounded-xl border text-xs flex flex-col justify-between gap-2 transition-all ${
+                          isActive
+                            ? "bg-emerald-950/40 border-emerald-500/40 shadow-sm"
+                            : "bg-slate-950/80 border-slate-800 hover:border-slate-700"
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <div className="font-bold text-white truncate flex items-center gap-1.5">
+                              <span>{g.name || g.username}</span>
+                              {isActive && (
+                                <span className="text-[9px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.2 rounded font-semibold border border-emerald-500/30">
+                                  ACTIVE
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-[10px] text-slate-400 font-mono mt-0.5">
+                              Login: {g.username} &bull; SIM {g.simNumber || 1}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between pt-1 border-t border-slate-800/60">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setActiveGatewayUsername(g.username);
+                              showToast(
+                                "info",
+                                `Switched to "${g.username}". Contacts & history updated.`,
+                                "Gateway Switched"
+                              );
+                            }}
+                            disabled={isActive}
+                            className={`px-2.5 py-1 rounded-lg text-[10px] font-semibold transition ${
+                              isActive
+                                ? "bg-emerald-500/20 text-emerald-400 cursor-default"
+                                : "bg-slate-800 hover:bg-slate-700 text-white"
+                            }`}
+                          >
+                            {isActive ? "Active Credential" : "Switch to This"}
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (confirm(`Remove gateway credentials for "${g.username}"?`)) {
+                                deleteSavedGateway(g.username);
+                              }
+                            }}
+                            className="text-[10px] text-rose-400 hover:text-rose-300 transition"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* 1. Android Gateway Settings Form */}
             <div className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-5 backdrop-blur-md space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
@@ -176,18 +285,31 @@ export default function ConnectionPage() {
                 </span>
 
                 <span
-                  className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${isGatewayOnline === true
-                    ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
-                    : isGatewayOnline === false
+                  className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
+                    isGatewayOnline === true
+                      ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
+                      : isGatewayOnline === false
                       ? "bg-rose-500/10 text-rose-400 border-rose-500/30"
                       : "bg-slate-800 text-slate-400 border-slate-700"
-                    }`}
+                  }`}
                 >
                   {isGatewayOnline === true
                     ? `Gateway Verified (${gatewayLatency}ms)`
                     : isGatewayOnline === false
-                      ? "Offline / Bad Auth"
-                      : "Not Tested"}
+                    ? "Offline / Bad Auth"
+                    : "Not Tested"}
+                </span>
+              </div>
+
+              <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800 text-xs flex items-center justify-between">
+                <div>
+                  <span className="text-slate-400 block text-[10px]">Active Android Account:</span>
+                  <span className="text-emerald-400 font-bold font-mono">
+                    {activeGatewayUsername || "None (Enter credentials below)"}
+                  </span>
+                </div>
+                <span className="text-[10px] text-slate-500">
+                  Tested first before saving in database
                 </span>
               </div>
 
@@ -279,10 +401,11 @@ export default function ConnectionPage() {
                 <div className="pt-2 flex justify-end gap-2">
                   <button
                     type="submit"
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 text-white font-semibold hover:bg-emerald-500 transition shadow-sm"
+                    disabled={isSavingGateway}
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 text-white font-semibold hover:bg-emerald-500 transition shadow-sm disabled:opacity-60 cursor-pointer"
                   >
-                    <Save className="h-3.5 w-3.5" />
-                    <span>Save Gateway Credentials</span>
+                    <Save className={`h-3.5 w-3.5 ${isSavingGateway ? "animate-spin" : ""}`} />
+                    <span>{isSavingGateway ? "Testing & Saving to DB..." : "Save Gateway Credentials"}</span>
                   </button>
                 </div>
               </form>
@@ -320,33 +443,15 @@ export default function ConnectionPage() {
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
                   <Database className="h-4 w-4 text-emerald-400" />
-                  MongoDB Cloud Storage Status
+                   Status
                 </span>
 
-                <span
-                  className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${isMongoConnected
-                    ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
-                    : "bg-slate-800 text-slate-400 border-slate-700"
-                    }`}
-                >
-                  {isMongoConnected ? "Connected" : "Local Storage Mode"}
-                </span>
+               
               </div>
 
-              <p className="text-xs text-slate-300 leading-relaxed">
-                {isMongoConnected
-                  ? `MongoDB Atlas is connected and active. All sent messages, campaigns, contacts, and custom templates are stored securely in your database.`
-                  : `The application is currently running smoothly in Local Storage mode. To enable persistent cloud database synchronization across devices, add your MongoDB connection string in the .env file:`}
-              </p>
+             
 
-              {!isMongoConnected && (
-                <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs font-mono text-emerald-400/90 overflow-x-auto">
-                  <code>
-                    # In your project .env file:<br />
-                    MONGODB_URI=mongodb+srv://&lt;username&gt;:&lt;password&gt;@cluster0.mongodb.net/bulksms_pakistan
-                  </code>
-                </div>
-              )}
+              
 
               {isMongoConnected && mongoStats && (
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
@@ -369,17 +474,7 @@ export default function ConnectionPage() {
                 </div>
               )}
 
-              <div className="pt-2 flex justify-end">
-                <button
-                  type="button"
-                  onClick={handleTestDatabase}
-                  disabled={isTestingDb}
-                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-white transition disabled:opacity-60"
-                >
-                  <RefreshCw className={`h-3.5 w-3.5 ${isTestingDb ? "animate-spin" : ""}`} />
-                  <span>{isTestingDb ? "Checking Database..." : "Test Database Connection"}</span>
-                </button>
-              </div>
+              
             </div>
 
             {/* 3. System Backup & Export */}
@@ -393,16 +488,7 @@ export default function ConnectionPage() {
                 Export all your contacts, custom templates, campaign history, and configuration into a portable JSON backup file.
               </p>
 
-              <div className="pt-1 flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={handleExportBackup}
-                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-white transition"
-                >
-                  <Download className="h-3.5 w-3.5 text-emerald-400" />
-                  <span>Download Full JSON Backup</span>
-                </button>
-              </div>
+             
             </div>
           </div>
 
@@ -475,12 +561,7 @@ export default function ConnectionPage() {
                 </div>
               </div>
 
-              <div className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800 text-[11px] text-slate-400 flex items-start gap-2">
-                <Info className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
-                <span>
-                  <strong>Local Wi-Fi Mode:</strong> If your PC and phone are on the same Wi-Fi network, you can also use Local Server mode (`http://192.168.x.x:8080`) for zero-internet high-speed dispatch!
-                </span>
-              </div>
+              
             </div>
           </div>
         </div>

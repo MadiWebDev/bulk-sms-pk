@@ -38,7 +38,20 @@ const OPTOUT_STORAGE_KEY = "bulk_sms_optout_v1"; // shared with the Bulk SMS pag
 const PAGE_SIZE = 50;
 
 export default function ContactsPage() {
-  const { contacts, contactGroups, addContacts, deleteContact, showToast } = useSms();
+  const {
+    contacts,
+    contactGroups,
+    addContacts,
+    deleteContact,
+    showToast,
+    activeGatewayUsername,
+    savedGateways,
+  } = useSms();
+
+  const activeGw = savedGateways.find((g) => g.username === activeGatewayUsername) || {
+    username: activeGatewayUsername || "Default",
+    name: activeGatewayUsername ? `Android (${activeGatewayUsername})` : "Default",
+  };
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedGroupFilter, setSelectedGroupFilter] = useState("all");
@@ -472,6 +485,9 @@ export default function ContactsPage() {
               <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                 <Users className="h-3 w-3" />
                 Customer Phonebook & Segmentation
+              </span>
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">
+                📱 Gateway: {activeGw.username}
               </span>
             </div>
             <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-white">

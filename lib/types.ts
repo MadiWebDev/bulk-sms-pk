@@ -4,6 +4,8 @@ export type MessageStatus = "pending" | "sending" | "queued" | "delivered" | "fa
 
 export interface MessageRecord {
   id: string;
+  gatewayUsername?: string;
+  userId?: string;
   phone: string;
   nationalPhone?: string;
   operator?: PakistanOperator;
@@ -19,6 +21,8 @@ export interface MessageRecord {
 
 export interface CampaignRecord {
   id: string;
+  gatewayUsername?: string;
+  userId?: string;
   title: string;
   createdAt: string;
   totalRecipients: number;
@@ -33,6 +37,8 @@ export interface CampaignRecord {
 
 export interface ContactRecord {
   id: string;
+  gatewayUsername?: string;
+  userId?: string;
   name: string;
   phone: string;
   nationalPhone: string;
@@ -64,6 +70,8 @@ export type TemplateCategory =
 
 export interface TemplateRecord {
   id: string;
+  gatewayUsername?: string;
+  userId?: string;
   name: string;
   category: TemplateCategory;
   text: string;
@@ -71,13 +79,24 @@ export interface TemplateRecord {
   isPreset?: boolean;
 }
 
-
 export interface GatewayConfig {
+  id?: string;
+  name?: string;
   username: string;
   password?: string;
   baseUrl: string;
   deviceId?: string;
   simNumber: number;
+  isVerified?: boolean;
+  lastTestedAt?: string;
+  updatedAt?: string;
+  createdAt?: string;
+}
+
+export interface UserAccount {
+  id: string;
+  name: string;
+  email?: string;
 }
 
 export interface ToastItem {
