@@ -18,6 +18,16 @@ import {
 type SendMode = "quick" | "csv" | "single_test";
 type RowStatus = "pending" | "sending" | "queued" | "failed" | "delivered";
 
+export type ToastType = "success" | "danger" | "warning" | "info";
+
+export interface ToastItem {
+  id: string;
+  type: ToastType;
+  title?: string;
+  message: string;
+  durationMs: number;
+}
+
 interface DisplayRow {
   phone: string;
   nationalPhone?: string;
@@ -78,6 +88,54 @@ export default function BulkSmsPakistan() {
     message?: string;
   }>({ loading: false });
 
+  // Toast System State
+  const [toasts, setToasts] = useState<ToastItem[]>([]);
+
+  const showToast = (
+    type: ToastType | "error",
+    message: string,
+    title?: string,
+    customDuration?: number
+  ) => {
+    const normalizedType: ToastType = type === "error" ? "danger" : type;
+    const duration =
+      customDuration ||
+      (normalizedType === "danger"
+        ? 5000
+        : normalizedType === "warning"
+        ? 4500
+        : normalizedType === "success"
+        ? 4000
+        : 3500);
+
+    const id = Math.random().toString(36).substring(2, 9) + Date.now();
+    const newToast: ToastItem = {
+      id,
+      type: normalizedType,
+      title:
+        title ||
+        (normalizedType === "danger"
+          ? "Error"
+          : normalizedType === "warning"
+          ? "Warning"
+          : normalizedType === "success"
+          ? "Success"
+          : "Info"),
+      message,
+      durationMs: duration,
+    };
+
+    setToasts((prev) => [...prev, newToast]);
+
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, duration);
+  };
+
+  const removeToast = (id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  };
+
   // Mode & Inputs
   const [mode, setMode] = useState<SendMode>("quick");
   const [quickNumbersRaw, setQuickNumbersRaw] = useState(
@@ -116,7 +174,6 @@ export default function BulkSmsPakistan() {
   const isPausedRef = useRef(false);
   const [rows, setRows] = useState<DisplayRow[]>([]);
   const [progress, setProgress] = useState({ done: 0, total: 0, success: 0, failed: 0 });
-  const [bannerAlert, setBannerAlert] = useState<{ type: "error" | "success" | "info"; msg: string } | null>(null);
 
   // Load credentials from LocalStorage or server .env on initial mount
   useEffect(() => {
@@ -213,10 +270,7 @@ export default function BulkSmsPakistan() {
       localStorage.removeItem(LOCAL_STORAGE_KEY);
       setIsSavedInStorage(false);
       setTestConnStatus({ loading: false });
-      setBannerAlert({
-        type: "info",
-        msg: "Credentials cleared from your browser's LocalStorage.",
-      });
+      showToast("info", "Credentials cleared from your browser's LocalStorage.", "Cleared", 3500);
     } catch {
       // ignore
     }
@@ -352,26 +406,32 @@ export default function BulkSmsPakistan() {
       });
       const data = await res.json();
       if (res.ok && data.ok) {
+        const msg = data.message || "Connection successful! Gateway is ready to send SMS.";
         setTestConnStatus({
           loading: false,
           success: true,
-          message: data.message || "Connection successful! Gateway is ready to send SMS.",
+          message: msg,
         });
+        showToast("success", msg, "Gateway Connected", 4000);
       } else {
+        const err =
+          data.error ||
+          `HTTP ${res.status}: Connection failed. Verify Cloud Server is turned ON in the Android app.`;
         setTestConnStatus({
           loading: false,
           success: false,
-          message:
-            data.error ||
-            `HTTP ${res.status}: Connection failed. Verify Cloud Server is turned ON in the Android app.`,
+          message: err,
         });
+        showToast("danger", err, "Gateway Error", 5000);
       }
     } catch (e) {
+      const errMsg = e instanceof Error ? e.message : "Network error contacting gateway tester";
       setTestConnStatus({
         loading: false,
         success: false,
-        message: e instanceof Error ? e.message : "Network error contacting gateway tester",
+        message: errMsg,
       });
+      showToast("danger", errMsg, "Connection Failed", 5000);
     }
   }
 
@@ -389,19 +449,20 @@ export default function BulkSmsPakistan() {
   // Single test send
   async function handleSendSingleTest() {
     if (!singlePhoneCheck?.isValid || !singlePhoneCheck.e164) {
-      setBannerAlert({
-        type: "error",
-        msg: "Please enter a valid Pakistani mobile number (e.g. 03001234567 or +923001234567).",
-      });
+      showToast(
+        "danger",
+        "Please enter a valid Pakistani mobile number (e.g. 03001234567 or +923001234567).",
+        "Invalid Phone",
+        4500
+      );
       return;
     }
     if (!singleText.trim()) {
-      setBannerAlert({ type: "error", msg: "Message text cannot be empty." });
+      showToast("warning", "Message text cannot be empty.", "Empty Message", 4000);
       return;
     }
 
     setSending(true);
-    setBannerAlert(null);
 
     try {
       const res = await fetch("/api/sms/send", {
@@ -420,14 +481,16 @@ export default function BulkSmsPakistan() {
 
       const data = await res.json();
       if (!res.ok) {
-        setBannerAlert({ type: "error", msg: data?.error || `Failed with status ${res.status}` });
+        showToast("danger", data?.error || `Failed with status ${res.status}`, "Sending Failed", 5000);
       } else {
         const itemRes = data.results?.[0];
         if (itemRes?.ok) {
-          setBannerAlert({
-            type: "success",
-            msg: `SMS Queued successfully to ${singlePhoneCheck.e164}! Message ID: ${itemRes.id || "Enqueued"}`,
-          });
+          showToast(
+            "success",
+            `SMS Queued successfully to ${singlePhoneCheck.e164}! Message ID: ${itemRes.id || "Enqueued"}`,
+            "SMS Queued",
+            4000
+          );
           setRows((prev) => [
             {
               phone: singlePhoneCheck.e164!,
@@ -442,11 +505,11 @@ export default function BulkSmsPakistan() {
             ...prev,
           ]);
         } else {
-          setBannerAlert({ type: "error", msg: itemRes?.error || "Gateway rejected message." });
+          showToast("danger", itemRes?.error || "Gateway rejected message.", "Gateway Rejection", 5000);
         }
       }
     } catch (e) {
-      setBannerAlert({ type: "error", msg: e instanceof Error ? e.message : "Error sending test SMS" });
+      showToast("danger", e instanceof Error ? e.message : "Error sending test SMS", "Error", 5000);
     } finally {
       setSending(false);
     }
@@ -454,7 +517,6 @@ export default function BulkSmsPakistan() {
 
   // Bulk Send Runner
   async function handleBulkSend() {
-    setBannerAlert(null);
     isCancelledRef.current = false;
     isPausedRef.current = false;
     setIsPaused(false);
@@ -465,11 +527,11 @@ export default function BulkSmsPakistan() {
     if (mode === "quick") {
       const validNumbers = quickParsedBatch.valid;
       if (validNumbers.length === 0) {
-        setBannerAlert({ type: "error", msg: "No valid Pakistan numbers found in your input." });
+        showToast("danger", "No valid Pakistan numbers found in your input.", "No Recipients", 4500);
         return;
       }
       if (!messageText.trim()) {
-        setBannerAlert({ type: "error", msg: "Message text cannot be empty." });
+        showToast("warning", "Message text cannot be empty.", "Empty Message", 4000);
         return;
       }
 
@@ -492,15 +554,15 @@ export default function BulkSmsPakistan() {
       });
     } else if (mode === "csv") {
       if (csvParsed.errors.length > 0) {
-        setBannerAlert({ type: "error", msg: csvParsed.errors[0] });
+        showToast("danger", csvParsed.errors[0], "CSV Format Error", 5000);
         return;
       }
       if (csvParsed.valid.length === 0) {
-        setBannerAlert({ type: "error", msg: "CSV contains no valid Pakistan recipient rows." });
+        showToast("danger", "CSV contains no valid Pakistan recipient rows.", "No Recipients", 4500);
         return;
       }
       if (!templateText.trim()) {
-        setBannerAlert({ type: "error", msg: "Template text cannot be empty." });
+        showToast("warning", "Template text cannot be empty.", "Empty Message", 4000);
         return;
       }
 
@@ -527,6 +589,7 @@ export default function BulkSmsPakistan() {
     setRows(baseDisplayRows);
     setSending(true);
     setProgress({ done: 0, total: itemsToSend.length, success: 0, failed: 0 });
+    showToast("info", `Starting bulk broadcast to ${itemsToSend.length} Pakistan numbers...`, "Broadcast Started", 3500);
 
     const CHUNK_SIZE = 5;
     let doneCount = 0;
@@ -623,18 +686,43 @@ export default function BulkSmsPakistan() {
 
     setSending(false);
     setIsPaused(false);
+
+    if (!isCancelledRef.current) {
+      if (failedCount === 0) {
+        showToast(
+          "success",
+          `All ${successCount} messages were successfully queued to gateway!`,
+          "Broadcast Completed",
+          4500
+        );
+      } else {
+        showToast(
+          "warning",
+          `Broadcast completed: ${successCount} queued, ${failedCount} failed. Check table below.`,
+          "Broadcast Finished",
+          5000
+        );
+      }
+    }
   }
 
   function handlePauseToggle() {
     const next = !isPaused;
     setIsPaused(next);
     isPausedRef.current = next;
+    showToast(
+      next ? "warning" : "info",
+      next ? "Broadcast paused." : "Broadcast resumed.",
+      next ? "Paused" : "Resumed",
+      3000
+    );
   }
 
   function handleCancel() {
     isCancelledRef.current = true;
     setIsPaused(false);
     setSending(false);
+    showToast("danger", "Broadcast cancelled by user.", "Cancelled", 3500);
   }
 
   // Check single message delivery status
@@ -653,10 +741,10 @@ export default function BulkSmsPakistan() {
       });
       const data = await res.json();
       if (res.ok && data) {
+        const state = data.state || data.recipients?.[0]?.state || "Unknown";
         setRows((prev) => {
           const next = [...prev];
           if (next[rowIndex]) {
-            const state = data.state || data.recipients?.[0]?.state || "Unknown";
             next[rowIndex] = {
               ...next[rowIndex],
               state,
@@ -665,9 +753,12 @@ export default function BulkSmsPakistan() {
           }
           return next;
         });
+        showToast("info", `Message status: ${state}`, "Status Checked", 3000);
+      } else {
+        showToast("danger", data?.error || `HTTP ${res.status}: Failed to check status`, "Status Check Failed", 4000);
       }
     } catch {
-      // ignore
+      showToast("danger", "Network error checking message status.", "Error", 4000);
     }
   }
 
@@ -699,6 +790,7 @@ export default function BulkSmsPakistan() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    showToast("success", `Exported ${rows.length} recipient delivery records to CSV.`, "CSV Exported", 3500);
   }
 
   // Filtered rows for results table
@@ -760,32 +852,114 @@ export default function BulkSmsPakistan() {
 
       {/* Main Container */}
       <main className="mx-auto max-w-7xl px-4 pt-6 sm:px-6 space-y-6">
-        {/* Banner Alert */}
-        {bannerAlert && (
-          <div
-            className={`flex items-center justify-between rounded-xl border p-4 text-sm ${
-              bannerAlert.type === "error"
-                ? "border-rose-500/40 bg-rose-950/40 text-rose-300"
-                : bannerAlert.type === "success"
-                ? "border-emerald-500/40 bg-emerald-950/40 text-emerald-300"
-                : "border-blue-500/40 bg-blue-950/40 text-blue-300"
-            }`}
-          >
-            <div className="flex items-center gap-2">
-              <span className="font-semibold">
-                {bannerAlert.type === "error" ? "Notice:" : bannerAlert.type === "success" ? "Success:" : "Info:"}
-              </span>
-              <span>{bannerAlert.msg}</span>
-            </div>
-            <button
-              type="button"
-              onClick={() => setBannerAlert(null)}
-              className="text-xs opacity-70 hover:opacity-100"
-            >
-              ✕
-            </button>
-          </div>
-        )}
+        {/* Toast Notification Container with Live Animated Progress Timers */}
+        <div className="fixed top-5 right-5 z-50 flex flex-col gap-3 max-w-sm w-full pointer-events-none px-4 sm:px-0">
+          <style>{`
+            @keyframes toastTimerCountdown {
+              from { width: 100%; }
+              to { width: 0%; }
+            }
+            @keyframes toastSlideInRight {
+              from { transform: translateX(110%); opacity: 0; }
+              to { transform: translateX(0); opacity: 1; }
+            }
+          `}</style>
+          {toasts.map((toast) => {
+            const isSuccess = toast.type === "success";
+            const isDanger = toast.type === "danger";
+            const isWarning = toast.type === "warning";
+
+            const borderColor = isSuccess
+              ? "border-emerald-500/40"
+              : isDanger
+              ? "border-rose-500/40"
+              : isWarning
+              ? "border-amber-500/40"
+              : "border-sky-500/40";
+
+            const iconBg = isSuccess
+              ? "bg-emerald-500/20 text-emerald-400"
+              : isDanger
+              ? "bg-rose-500/20 text-rose-400"
+              : isWarning
+              ? "bg-amber-500/20 text-amber-400"
+              : "bg-sky-500/20 text-sky-400";
+
+            const timerColor = isSuccess
+              ? "bg-emerald-500"
+              : isDanger
+              ? "bg-rose-500"
+              : isWarning
+              ? "bg-amber-500"
+              : "bg-sky-500";
+
+            return (
+              <div
+                key={toast.id}
+                className={`pointer-events-auto relative overflow-hidden rounded-2xl border ${borderColor} bg-slate-900/95 backdrop-blur-md shadow-2xl shadow-black/80 transition-all`}
+                style={{
+                  animation: "toastSlideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+                }}
+              >
+                <div className="flex items-start gap-3 p-3.5">
+                  {/* Icon */}
+                  <div className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-xl ${iconBg}`}>
+                    {isSuccess && (
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                    {isDanger && (
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    )}
+                    {isWarning && (
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                    )}
+                    {toast.type === "info" && (
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    )}
+                  </div>
+
+                  {/* Content */}
+                  <div className="flex-1 pr-1">
+                    {toast.title && (
+                      <h4 className="text-xs font-bold text-white tracking-tight">{toast.title}</h4>
+                    )}
+                    <p className="mt-0.5 text-xs text-slate-300 leading-relaxed font-normal">{toast.message}</p>
+                  </div>
+
+                  {/* Close Button */}
+                  <button
+                    type="button"
+                    onClick={() => removeToast(toast.id)}
+                    className="rounded-lg p-1 text-slate-400 hover:text-white hover:bg-slate-800 transition"
+                    aria-label="Dismiss toast"
+                  >
+                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+
+                {/* Animated Countdown Timer Progress Bar */}
+                <div className="h-1 w-full bg-slate-800/80">
+                  <div
+                    className={`h-full ${timerColor}`}
+                    style={{
+                      animation: `toastTimerCountdown ${toast.durationMs}ms linear forwards`,
+                    }}
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
 
 
         {/* 1. HOW TO USE GUIDE (Collapsible Card) */}
