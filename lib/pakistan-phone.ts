@@ -9,7 +9,7 @@
  * - Standard Local Format: 03XXXXXXXXX (total 11 digits)
  */
 
-export type PakistanOperator = "Jazz" | "Zong" | "Ufone" | "Telenor" | "SCOM" | "Unknown";
+export type PakistanOperator = "Jazz" | "Zong" | "Ufone" | "Telenor" | "SCOM" | "Onic" | "Unknown";
 
 export interface PakistanPhoneValidation {
   raw: string;
@@ -40,13 +40,18 @@ export function detectPakistanOperator(prefix: string): PakistanOperator {
   }
   
   // Zong / CMPak (0310-0319)
-  if (code >= 310 && code <= 319) {
+  if (code >= 310 && code <= 319 || code === 370 || code === 371) {
     return "Zong";
   }
   
   // Ufone (0330-0337, 0339)
-  if ((code >= 330 && code <= 337) || code === 339) {
+  if ((code >= 330 && code <= 337) ) {
     return "Ufone";
+  }
+
+  // Onic (0339)
+  if (code === 339) {
+    return "Onic";
   }
   
   // Telenor (0340-0349)
@@ -185,6 +190,7 @@ export function validatePakistanPhoneBatch(
     Ufone: 0,
     Telenor: 0,
     SCOM: 0,
+    Onic: 0,
     Unknown: 0,
   };
 

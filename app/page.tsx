@@ -138,8 +138,9 @@ export default function BulkSmsPakistan() {
 
   // Mode & Inputs
   const [mode, setMode] = useState<SendMode>("quick");
+  const [quickViewMode, setQuickViewMode] = useState<"lines" | "raw">("lines");
   const [quickNumbersRaw, setQuickNumbersRaw] = useState(
-    "03001234567\n03129876543\n03335551234\n03456789012\n92 321 4455667\n+1 555 123 4567\n051 9201234"
+    "03001234567\n923123456789\n+923331234567\n03451234567\n92 321 1234567"
   );
   const [messageText, setMessageText] = useState(
     "Salam! Check out our new online catalog at https://mystore.pk/catalog . Special free delivery across Pakistan for orders placed today!"
@@ -287,7 +288,7 @@ export default function BulkSmsPakistan() {
     }
   }
 
-  // Quick mode phone validation
+  // Quick mode phone validation (batch — deduplicated, for send)
   const quickParsedBatch = useMemo(() => {
     const lines = quickNumbersRaw
       .split(/[\r\n,;]+/)
@@ -295,6 +296,54 @@ export default function BulkSmsPakistan() {
       .filter(Boolean);
     return validatePakistanPhoneBatch(lines, true);
   }, [quickNumbersRaw]);
+
+  // Quick mode per-line validation (preserves original order + duplicates for inline display)
+  const quickPerLineResults = useMemo(() => {
+    return quickNumbersRaw
+      .split(/[\r\n,;]+/)
+      .map((l) => l.trim())
+      .filter(Boolean)
+      .map((line) => validatePakistanPhone(line));
+  }, [quickNumbersRaw]);
+
+  // Quick mode line list for in-field validation view
+  const quickLines = useMemo(() => {
+    const raw = quickNumbersRaw;
+    if (!raw) return [""];
+    return raw.split("\n");
+  }, [quickNumbersRaw]);
+
+  const updateQuickLine = (index: number, val: string) => {
+    const lines = quickNumbersRaw.split("\n");
+    lines[index] = val;
+    setQuickNumbersRaw(lines.join("\n"));
+  };
+
+  const removeQuickLine = (index: number) => {
+    const lines = quickNumbersRaw.split("\n");
+    if (lines.length <= 1) {
+      setQuickNumbersRaw("");
+      return;
+    }
+    lines.splice(index, 1);
+    setQuickNumbersRaw(lines.join("\n"));
+  };
+
+  const addQuickLine = () => {
+    setQuickNumbersRaw((prev) => (prev ? `${prev}\n` : ""));
+  };
+
+  const handleQuickLinePaste = (index: number, e: React.ClipboardEvent<HTMLInputElement>) => {
+    const pasted = e.clipboardData.getData("text");
+    if (pasted.includes("\n") || pasted.includes(",")) {
+      e.preventDefault();
+      const parts = pasted.split(/[\r\n,;]+/).map((s) => s.trim()).filter(Boolean);
+      if (parts.length === 0) return;
+      const lines = quickNumbersRaw.split("\n");
+      lines.splice(index, 1, ...parts);
+      setQuickNumbersRaw(lines.join("\n"));
+    }
+  };
 
   // CSV parsing & validation
   const csvParsed = useMemo(() => {
@@ -352,6 +401,20 @@ export default function BulkSmsPakistan() {
     return { rows: validRows, headers, errors: [], excluded: excludedList, valid: validRows };
   }, [csvRaw]);
 
+  // CSV per-row phone validation (for inline display in textarea)
+  const csvPerRowResults = useMemo(() => {
+    const lines = csvRaw.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+    if (lines.length < 2) return [];
+    const headers = lines[0].split(",").map((h) => h.trim().toLowerCase());
+    const phoneIdx = headers.indexOf("phone");
+    if (phoneIdx === -1) return [];
+    return lines.slice(1).map((line) => {
+      const cells = line.split(",").map((c) => c.trim());
+      const phone = cells[phoneIdx] || "";
+      return { raw: line, phone, validation: validatePakistanPhone(phone) };
+    });
+  }, [csvRaw]);
+
   // Single phone check
   const singlePhoneCheck = useMemo(() => {
     if (!singlePhone.trim()) return null;
@@ -386,6 +449,8 @@ export default function BulkSmsPakistan() {
         return "bg-sky-50 text-sky-700 border-sky-200";
       case "SCOM":
         return "bg-indigo-50 text-indigo-700 border-indigo-200";
+      case "Onic":
+        return "bg-pink-50 text-pink-700 border-pink-200";
       default:
         return "bg-slate-100 text-slate-700 border-slate-200";
     }
@@ -991,7 +1056,7 @@ export default function BulkSmsPakistan() {
                   <h3 className="text-xs font-bold text-white">Install Android App</h3>
                 </div>
                 <p className="mt-2 text-xs text-slate-400 leading-relaxed">
-                  Install the free <a href="https://sms-gate.app/" target="_blank" rel="noreferrer" className="text-emerald-400 underline font-medium">SMS Gateway for Android</a> app on your Android phone with an active Pakistani SIM (Jazz, Zong, Ufone, Telenor, or SCOM).
+                  Install the free <a href="https://sms-gate.app/" target="_blank" rel="noreferrer" className="text-emerald-400 underline font-medium">SMS Gateway for Android</a> app on your Android phone with an active Pakistani SIM (Jazz, Zong, Ufone, Telenor, onic or SCOM).
                 </p>
               </div>
 
@@ -1325,7 +1390,7 @@ export default function BulkSmsPakistan() {
           <div className="flex items-center gap-2 text-xs text-slate-400 pr-2">
             <span className="flex items-center gap-1">
               <span className="h-2 w-2 rounded-full bg-emerald-400"></span>
-              Supported: Jazz &bull; Zong &bull; Ufone &bull; Telenor &bull; SCOM
+              Supported: Jazz &bull; Zong &bull; Ufone &bull; Telenor &bull; Onic &bull; SCOM
             </span>
           </div>
         </div>
@@ -1337,30 +1402,204 @@ export default function BulkSmsPakistan() {
             {/* Quick Numbers Mode */}
             {mode === "quick" && (
               <div className="rounded-2xl border border-slate-800 bg-slate-900/90 p-5 shadow-xl">
-                <div className="flex items-center justify-between pb-3">
+                <div className="flex flex-wrap items-center justify-between gap-2 pb-3">
                   <div>
-                    <h2 className="text-sm font-bold text-white">Paste Pakistan Phone Numbers</h2>
+                    <h2 className="text-sm font-bold text-white">Pakistan Phone Numbers</h2>
                     <p className="text-xs text-slate-400">
-                      Accepts all Pakistani formats (03001234567, 0300-1234567, +92 300...). Non-PK and landlines are auto-excluded.
+                      Live in-field validation: green ✓ for valid PK mobile (+923xx), red ✕ for landlines/foreign numbers.
                     </p>
                   </div>
-                  <span className="rounded-lg bg-slate-800 px-2.5 py-1 text-xs font-mono text-emerald-400">
-                    {quickParsedBatch.valid.length} Valid PK
-                  </span>
+                  <div className="flex items-center gap-2">
+                    {/* View Switcher: In-field Line Inputs vs Raw Textarea */}
+                    <div className="flex items-center rounded-lg bg-slate-950 p-0.5 border border-slate-800 text-xs">
+                      <button
+                        type="button"
+                        onClick={() => setQuickViewMode("lines")}
+                        className={`rounded px-2.5 py-1 text-xs font-semibold transition ${
+                          quickViewMode === "lines"
+                            ? "bg-emerald-600 text-white shadow-sm"
+                            : "text-slate-400 hover:text-slate-200"
+                        }`}
+                      >
+                        ✓/✕ In-Field Lines ({quickLines.filter((l) => l.trim()).length})
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setQuickViewMode("raw")}
+                        className={`rounded px-2.5 py-1 text-xs font-semibold transition ${
+                          quickViewMode === "raw"
+                            ? "bg-slate-800 text-white shadow-sm"
+                            : "text-slate-400 hover:text-slate-200"
+                        }`}
+                      >
+                        Raw Text
+                      </button>
+                    </div>
+
+                    <span className="rounded-lg bg-slate-800 px-2.5 py-1 text-xs font-mono text-emerald-400">
+                      {quickParsedBatch.valid.length} Valid PK
+                    </span>
+                  </div>
                 </div>
 
-                <textarea
-                  value={quickNumbersRaw}
-                  onChange={(e) => setQuickNumbersRaw(e.target.value)}
-                  rows={6}
-                  placeholder="Paste Pakistani numbers here (one per line, or comma separated)..."
-                  className="w-full rounded-xl border border-slate-800 bg-slate-950 p-3 font-mono text-xs text-slate-200 placeholder-slate-600 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                />
+                {quickViewMode === "lines" ? (
+                  <div className="space-y-2">
+                    <div className="max-h-72 overflow-y-auto space-y-1.5 rounded-xl border border-slate-800 bg-slate-950/70 p-2.5">
+                      {quickLines.map((line, idx) => {
+                        const trimmed = line.trim();
+                        const validation = trimmed ? validatePakistanPhone(trimmed) : null;
+                        return (
+                          <div key={idx} className="flex items-center gap-2">
+                            <span className="w-6 shrink-0 text-right font-mono text-[11px] text-slate-500">
+                              #{idx + 1}
+                            </span>
+                            <div className="relative flex-1">
+                              <input
+                                type="text"
+                                value={line}
+                                onChange={(e) => updateQuickLine(idx, e.target.value)}
+                                onPaste={(e) => handleQuickLinePaste(idx, e)}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") {
+                                    e.preventDefault();
+                                    addQuickLine();
+                                  }
+                                }}
+                                placeholder="03001234567..."
+                                className={`w-full rounded-lg border bg-slate-900/90 px-3 py-1.5 pr-32 font-mono text-xs text-slate-200 placeholder-slate-600 focus:outline-none transition ${
+                                  validation
+                                    ? validation.isValid
+                                      ? "border-emerald-500/50 focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400"
+                                      : "border-rose-500/50 focus:border-rose-400 focus:ring-1 focus:ring-rose-400"
+                                    : "border-slate-800 focus:border-emerald-500"
+                                }`}
+                              />
+
+                              {/* Tick / Cross + Operator inside the right edge of input */}
+                              {validation && (
+                                <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1.5 pointer-events-none">
+                                  {validation.isValid ? (
+                                    <>
+                                      {validation.operator && (
+                                        <span
+                                          className={`rounded px-1.5 py-0.5 text-[10px] font-semibold border ${getOperatorBadge(
+                                            validation.operator
+                                          )}`}
+                                        >
+                                          {validation.operator}
+                                        </span>
+                                      )}
+                                      <span
+                                        className="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400 text-[11px] font-bold"
+                                        title={`Valid: ${validation.e164}`}
+                                      >
+                                        ✓
+                                      </span>
+                                    </>
+                                  ) : (
+                                    <div
+                                      className="flex items-center gap-1.5"
+                                      title={validation.reason}
+                                    >
+                                      <span className="hidden sm:inline max-w-[120px] truncate text-[10px] text-rose-400/90 font-medium">
+                                        {validation.reason?.split("(")[0]?.split(".")[0] || "Invalid"}
+                                      </span>
+                                      <span className="flex h-4 w-4 items-center justify-center rounded-full bg-rose-500/20 text-rose-400 text-[11px] font-bold">
+                                        ✕
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => removeQuickLine(idx)}
+                              title="Delete number"
+                              className="shrink-0 rounded p-1 text-slate-500 hover:bg-slate-800 hover:text-rose-400 transition"
+                            >
+                              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    <div className="flex items-center justify-between pt-1">
+                      <button
+                        type="button"
+                        onClick={addQuickLine}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-800 bg-slate-900 px-3 py-1 text-xs font-semibold text-slate-300 hover:bg-slate-800 hover:text-white transition"
+                      >
+                        <span className="text-emerald-400 font-bold">+</span> Add Number Row
+                      </button>
+
+                      <span className="text-[11px] text-slate-500">
+                        Paste anywhere to auto-split lines • Press Enter for next row
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <textarea
+                      value={quickNumbersRaw}
+                      onChange={(e) => setQuickNumbersRaw(e.target.value)}
+                      rows={6}
+                      placeholder="Paste Pakistani numbers here (one per line, or comma separated)..."
+                      className="w-full rounded-xl border border-slate-800 bg-slate-950 p-3 font-mono text-xs text-slate-200 placeholder-slate-600 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                    />
+
+                    {/* Per-line inline validation list */}
+                    {quickPerLineResults.length > 0 && (
+                      <div className="mt-2 max-h-48 overflow-y-auto rounded-xl border border-slate-800 bg-slate-950/60 divide-y divide-slate-800/60">
+                        {quickPerLineResults.map((res, i) => (
+                          <div
+                            key={i}
+                            className={`flex items-center gap-2.5 px-3 py-1.5 text-xs ${
+                              res.isValid ? "" : "bg-rose-950/10"
+                            }`}
+                          >
+                            <span
+                              className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${
+                                res.isValid
+                                  ? "bg-emerald-500/20 text-emerald-400"
+                                  : "bg-rose-500/20 text-rose-400"
+                              }`}
+                            >
+                              {res.isValid ? "✓" : "✗"}
+                            </span>
+                            <span className="font-mono text-slate-300 truncate max-w-[110px]">{res.raw}</span>
+                            {res.isValid ? (
+                              <>
+                                <span className="text-slate-600">→</span>
+                                <span className="font-mono text-emerald-400 font-semibold">{res.e164}</span>
+                                {res.operator && (
+                                  <span
+                                    className={`ml-auto shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold border ${getOperatorBadge(
+                                      res.operator
+                                    )}`}
+                                  >
+                                    {res.operator}
+                                  </span>
+                                )}
+                              </>
+                            ) : (
+                              <span className="ml-1 truncate text-rose-400/80 italic">{res.reason}</span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Operator Stats Pill Bar */}
                 <div className="mt-3 flex flex-wrap items-center gap-2 pt-2 border-t border-slate-800/80">
                   <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Detected:</span>
-                  {(["Jazz", "Zong", "Ufone", "Telenor", "SCOM"] as PakistanOperator[]).map((op) => {
+                  {(["Jazz", "Zong", "Ufone", "Telenor", "Onic", "SCOM"] as PakistanOperator[]).map((op) => {
                     const count = quickParsedBatch.operatorStats[op] || 0;
                     if (count === 0) return null;
                     return (
@@ -1409,6 +1648,55 @@ export default function BulkSmsPakistan() {
                   <p className="mt-2 text-xs text-rose-400">{csvParsed.errors.join(", ")}</p>
                 )}
 
+                {/* Per-row phone validation list for CSV */}
+                {csvPerRowResults.length > 0 && (
+                  <div className="mt-2 max-h-40 overflow-y-auto rounded-xl border border-slate-800 bg-slate-950/60 divide-y divide-slate-800/60">
+                    {csvPerRowResults.map((row, i) => (
+                      <div
+                        key={i}
+                        className={`flex items-center gap-2.5 px-3 py-1.5 text-xs ${
+                          row.validation.isValid ? "" : "bg-rose-950/10"
+                        }`}
+                      >
+                        {/* Row number */}
+                        <span className="shrink-0 text-[10px] text-slate-600 font-mono w-5">#{i + 1}</span>
+
+                        {/* ✓ / ✗ icon */}
+                        <span
+                          className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${
+                            row.validation.isValid
+                              ? "bg-emerald-500/20 text-emerald-400"
+                              : "bg-rose-500/20 text-rose-400"
+                          }`}
+                        >
+                          {row.validation.isValid ? "✓" : "✗"}
+                        </span>
+
+                        {/* Phone raw */}
+                        <span className="font-mono text-slate-300 truncate max-w-[100px]">{row.phone || "(no phone)"}</span>
+
+                        {row.validation.isValid ? (
+                          <>
+                            <span className="text-slate-600">→</span>
+                            <span className="font-mono text-emerald-400 font-semibold">{row.validation.e164}</span>
+                            {row.validation.operator && (
+                              <span
+                                className={`ml-auto shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold border ${getOperatorBadge(
+                                  row.validation.operator
+                                )}`}
+                              >
+                                {row.validation.operator}
+                              </span>
+                            )}
+                          </>
+                        ) : (
+                          <span className="ml-1 truncate text-rose-400/80 italic">{row.validation.reason}</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
                 <div className="mt-3 flex flex-wrap items-center gap-2">
                   <span className="text-xs text-slate-400">Insert tag into template:</span>
                   {csvParsed.headers.map((h) => (
@@ -1436,21 +1724,56 @@ export default function BulkSmsPakistan() {
                 <div className="space-y-4">
                   <div>
                     <label className="text-xs font-medium text-slate-300">Recipient Pakistan Phone Number</label>
-                    <input
-                      type="text"
-                      value={singlePhone}
-                      onChange={(e) => setSinglePhone(e.target.value)}
-                      placeholder="e.g. 03001234567 or +923001234567"
-                      className="mt-1 w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-xs font-mono text-slate-200 placeholder-slate-600 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                    />
+                    <div className="relative mt-1">
+                      <input
+                        type="text"
+                        value={singlePhone}
+                        onChange={(e) => setSinglePhone(e.target.value)}
+                        placeholder="e.g. 03001234567 or +923001234567"
+                        className={`w-full rounded-xl border bg-slate-950 pl-3 pr-28 py-2.5 text-xs font-mono text-slate-200 placeholder-slate-600 focus:outline-none transition ${
+                          singlePhoneCheck
+                            ? singlePhoneCheck.isValid
+                              ? "border-emerald-500/60 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                              : "border-rose-500/60 focus:border-rose-500 focus:ring-1 focus:ring-rose-500"
+                            : "border-slate-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                        }`}
+                      />
+                      {singlePhoneCheck && (
+                        <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1.5 pointer-events-none">
+                          {singlePhoneCheck.isValid ? (
+                            <>
+                              {singlePhoneCheck.operator && (
+                                <span
+                                  className={`rounded px-1.5 py-0.5 text-[10px] font-semibold border ${getOperatorBadge(
+                                    singlePhoneCheck.operator
+                                  )}`}
+                                >
+                                  {singlePhoneCheck.operator}
+                                </span>
+                              )}
+                              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-bold">
+                                ✓
+                              </span>
+                            </>
+                          ) : (
+                            <span
+                              className="flex h-5 w-5 items-center justify-center rounded-full bg-rose-500/20 text-rose-400 text-xs font-bold"
+                              title={singlePhoneCheck.reason}
+                            >
+                              ✕
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
                     {singlePhoneCheck && (
                       <div className="mt-1.5 flex items-center gap-2 text-xs">
                         {singlePhoneCheck.isValid ? (
-                          <span className="flex items-center gap-1.5 text-emerald-400">
-                            ✓ Valid {singlePhoneCheck.operator} ({singlePhoneCheck.e164})
+                          <span className="flex items-center gap-1.5 text-emerald-400 font-mono text-[11px]">
+                            E.164: {singlePhoneCheck.e164} • National: {singlePhoneCheck.national}
                           </span>
                         ) : (
-                          <span className="text-rose-400">✕ {singlePhoneCheck.reason}</span>
+                          <span className="text-rose-400 text-xs">✕ {singlePhoneCheck.reason}</span>
                         )}
                       </div>
                     )}
@@ -1848,6 +2171,7 @@ export default function BulkSmsPakistan() {
                   <option value="Zong">Zong</option>
                   <option value="Ufone">Ufone</option>
                   <option value="Telenor">Telenor</option>
+                  <option value="Onic">Onic</option>
                   <option value="SCOM">SCOM</option>
                 </select>
 
