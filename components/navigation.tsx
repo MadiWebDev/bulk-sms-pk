@@ -39,7 +39,7 @@ export function Navigation() {
     { label: "Delivery Logs", href: "/history", icon: History },
     { label: "Contacts", href: "/contacts", icon: Users },
     { label: "Templates", href: "/templates", icon: FileText },
-    { label: "Connection & DB", href: "/connection", icon: Settings },
+    { label: "Connection", href: "/connection", icon: Settings },
   ];
 
   // Close mobile menu on route change
@@ -122,32 +122,8 @@ export function Navigation() {
 
           {/* Right Status Actions (md and up) */}
           <div className="hidden md:flex items-center gap-2 shrink-0">
-            {/* MongoDB Badge */}
-            <Link
-              href="/connection"
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium border transition-colors whitespace-nowrap ${
-                isMongoConnected
-                  ? "bg-emerald-950/40 text-emerald-300 border-emerald-500/30 hover:bg-emerald-900/30"
-                  : "bg-slate-900 text-slate-400 border-slate-800 hover:border-slate-700"
-              }`}
-              title={
-                isMongoConnected
-                  ? "MongoDB Connected & Syncing"
-                  : "Using Local Storage (Click to connect MongoDB)"
-              }
-            >
-              <Database
-                className={`h-3 w-3 ${
-                  isMongoConnected ? "text-emerald-400" : "text-slate-500"
-                }`}
-              />
-              <span className="hidden xl:inline">
-                {isMongoConnected ? "MongoDB Synced" : "Local Storage"}
-              </span>
-              <span className="xl:hidden">
-                {isMongoConnected ? "DB" : "Local"}
-              </span>
-            </Link>
+          
+           
 
             {/* Gateway Status & Quick Ping */}
             <button
@@ -180,18 +156,7 @@ export function Navigation() {
 
           {/* Mobile/Tablet menu button (below lg) */}
           <div className="flex lg:hidden items-center gap-2 shrink-0">
-            {/* Compact status indicator for mobile */}
-            <Link
-              href="/connection"
-              className={`md:hidden flex h-8 w-8 items-center justify-center rounded-lg border ${
-                isMongoConnected
-                  ? "bg-emerald-950/40 text-emerald-300 border-emerald-500/30"
-                  : "bg-slate-900 text-slate-400 border-slate-800"
-              }`}
-              title={isMongoConnected ? "MongoDB Connected" : "Local Storage"}
-            >
-              <Database className="h-3.5 w-3.5" />
-            </Link>
+         
 
             <button
               type="button"
@@ -274,16 +239,7 @@ export function Navigation() {
 
               {/* Status Row */}
               <div className="mt-3 pt-3 border-t border-slate-800/80 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between text-xs">
-                <Link
-                  href="/connection"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-1.5 text-slate-400 hover:text-emerald-300 transition-colors"
-                >
-                  <Database className="h-3.5 w-3.5" />
-                  <span>
-                    {isMongoConnected ? "MongoDB Active" : "Local Storage"}
-                  </span>
-                </Link>
+               
                 <button
                   onClick={() => {
                     testGatewayConnection();
