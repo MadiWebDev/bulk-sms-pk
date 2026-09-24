@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { SmsProvider } from "@/lib/context/sms-context";
+import { Navigation } from "@/components/navigation";
+import { ToastContainer } from "@/components/toast-container";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -13,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SMS Gateway Pakistan - Bulk SMS Platform",
-  description: "Send bulk SMS to Pakistani numbers with rich text and URLs via sms-gate.app",
+  title: "Bulk SMS Pakistan - Enterprise Cellular SMS Platform",
+  description: "Send high-throughput SMS campaigns, OTPs, and test alerts across all Pakistani mobile networks (Jazz, Zong, Telenor, Ufone, SCOM) with sms-gate.app and MongoDB persistence.",
 };
 
 export default function RootLayout({
@@ -28,8 +31,15 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body suppressHydrationWarning className="min-h-full flex flex-col bg-slate-900 text-slate-100">
-        {children}
+      <body
+        suppressHydrationWarning
+        className="min-h-full flex flex-col bg-slate-950 text-slate-100 font-sans selection:bg-emerald-500/30 selection:text-emerald-200"
+      >
+        <SmsProvider>
+          <Navigation />
+          <ToastContainer />
+          <div className="flex-1 flex flex-col">{children}</div>
+        </SmsProvider>
       </body>
     </html>
   );

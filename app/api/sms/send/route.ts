@@ -179,5 +179,44 @@ export async function POST(req: NextRequest) {
   const poolSize = Math.min(CONCURRENCY, items.length);
   await Promise.all(Array.from({ length: poolSize }, () => worker()));
 
+  // Asynchronously log to MongoDB if connected
+  try {
+    const { getDatabase } = await import("@/lib/mongodb");
+    const db = await getDatabase();
+    if (db) {
+      const recordsToInsert: any[] = [];
+      const timestamp = new Date().toISOString();
+
+      items.forEach((item, idx) => {
+        const res = results[idx];
+        const primaryPhone = (res?.phoneNumbers?.[0] || item.phoneNumbers[0] || "");
+        const check = validatePakistanPhone(primaryPhone);
+        
+        recordsToInsert.push({
+          id: res?.id || `msg_${Date.now()}_${idx}_${Math.random().toString(36).substring(2, 6)}`,
+          phone: check.e164 || primaryPhone,
+          nationalPhone: check.national || primaryPhone,
+          operator: check.operator || "Unknown",
+          text: item.text,
+          status: res?.ok ? "queued" : "failed",
+          gatewayId: res?.id,
+          error: res?.error,
+          timestamp,
+          campaignId: (body as any).campaignId || undefined,
+          campaignTitle: (body as any).campaignTitle || undefined,
+          simNumber,
+        });
+      });
+
+      if (recordsToInsert.length > 0) {
+        db.collection("messages").insertMany(recordsToInsert).catch((e) => {
+          console.warn("Could not auto-insert messages to DB:", e);
+        });
+      }
+    }
+  } catch {
+    // Non-blocking if mongo is not configured
+  }
+
   return NextResponse.json({ results });
 }

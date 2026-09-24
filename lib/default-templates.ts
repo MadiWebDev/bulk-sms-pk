@@ -1,0 +1,60 @@
+import { TemplateRecord } from "./types";
+
+export const DEFAULT_TEMPLATES: TemplateRecord[] = [
+  {
+    id: "tpl_promo_flash",
+    name: "⚡ Flash Sale & Discount Code",
+    category: "promotional",
+    isPreset: true,
+    variables: ["name", "discount", "code", "link"],
+    text: "Salam {name}! Exclusive MEGA SALE: Enjoy FLAT {discount}% OFF on all products today only. Shop online: {link} Use coupon code: {code}. Express delivery all over Pakistan! 🇵🇰",
+  },
+  {
+    id: "tpl_order_dispatched",
+    name: "📦 Order Dispatched & Live Tracking",
+    category: "transactional",
+    isPreset: true,
+    variables: ["name", "order_id", "courier", "tracking_link"],
+    text: "Dear {name}, your order #{order_id} has been dispatched via {courier}! Track your parcel delivery here: {tracking_link} . Expected delivery within 24-48 hours.",
+  },
+  {
+    id: "tpl_whatsapp_support",
+    name: "💬 Instant WhatsApp Support",
+    category: "support",
+    isPreset: true,
+    variables: ["name", "wa_link"],
+    text: "Salam {name}! Need help with your account or order? Click here to chat with our official Pakistan WhatsApp customer care team: {wa_link} (Mon-Sat 9am-9pm).",
+  },
+  {
+    id: "tpl_otp_security",
+    name: "🔐 OTP / Login Verification Code",
+    category: "alerts",
+    isPreset: true,
+    variables: ["code", "app_name"],
+    text: "Your {app_name} verification code is: {code}. Valid for 5 minutes. DO NOT share this secret OTP code with anyone, including customer support.",
+  },
+  {
+    id: "tpl_payment_due",
+    name: "💳 Invoice & Payment Reminder",
+    category: "transactional",
+    isPreset: true,
+    variables: ["name", "invoice_no", "amount", "due_date", "pay_link"],
+    text: "Reminder for {name}: Invoice #{invoice_no} amounting to PKR {amount} is due on {due_date}. Pay securely via Easypaisa/JazzCash/Bank at: {pay_link}. Thank you!",
+  },
+  {
+    id: "tpl_bilingual_urdu",
+    name: "🇵🇰 Urdu & English Bilingual Alert",
+    category: "promotional",
+    isPreset: true,
+    variables: ["name", "link"],
+    text: "محترم {name}، آپ کے لیے خصوصی رعایتی آفر! آن لائن آرڈر کرنے کے لیے نیچے دیے گئے لنک پر کلک کریں: {link}۔ فری ہوم ڈلیوری پورے پاکستان میں۔ Special offer for you with nationwide delivery!",
+  },
+  {
+    id: "tpl_appointment",
+    name: "📅 Appointment / Consultation Reminder",
+    category: "alerts",
+    isPreset: true,
+    variables: ["name", "date", "time", "location"],
+    text: "Hi {name}, this is a reminder of your scheduled appointment on {date} at {time} ({location}). Please reply or call if you need to reschedule.",
+  },
+];
