@@ -81,7 +81,7 @@ export default function BulkSmsPakistan() {
   // Mode & Inputs
   const [mode, setMode] = useState<SendMode>("quick");
   const [quickNumbersRaw, setQuickNumbersRaw] = useState(
-    "03001234567\n03129876543\n03335551234\n03456789012\n+92 321 4455667\n+1 555 123 4567\n051 9201234"
+    "03001234567\n03129876543\n03335551234\n03456789012\n92 321 4455667\n+1 555 123 4567\n051 9201234"
   );
   const [messageText, setMessageText] = useState(
     "Salam! Check out our new online catalog at https://mystore.pk/catalog . Special free delivery across Pakistan for orders placed today!"
@@ -922,7 +922,7 @@ export default function BulkSmsPakistan() {
             {/* Username / Login */}
             <div>
               <label className="block text-xs font-semibold text-slate-300">
-                SMSGate Username / Login <span className="text-emerald-400">*</span>
+                SMSGate Username / Login <span className="text-emerald-400">*</span> <span className="text-[10px] ml-4 mb-2 text-slate-500">e.g. AB4CD5</span>
               </label>
               <input
                 type="text"
@@ -932,7 +932,7 @@ export default function BulkSmsPakistan() {
                   setUsername(val);
                   updateAndPersistCreds(val);
                 }}
-                placeholder="e.g. A3KUT3"
+                placeholder="e.g. AB4CD5"
                 className="mt-1.5 w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-xs font-mono text-slate-200 placeholder-slate-600 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
               />
               <span className="mt-1 block text-[10px] text-slate-500">From Android App Cloud Server Login</span>
@@ -969,7 +969,7 @@ export default function BulkSmsPakistan() {
             {/* Device ID */}
             <div>
               <label className="block text-xs font-semibold text-slate-300">
-                SMSGate Device ID <span className="text-slate-500 font-normal">(Optional)</span>
+                SMSGate Device ID <span className="text-emerald-400">*</span><span className="text-slate-500 ml-3 font-normal">e.g. qXyoZUBLN2aA6Zs-VsqF1 </span>
               </label>
               <input
                 type="text"
