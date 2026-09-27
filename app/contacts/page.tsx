@@ -537,7 +537,7 @@ export default function ContactsPage() {
 
             <Link
               href="/bulk-sms"
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-emerald-950/40 border border-emerald-500/30 text-emerald-300 hover:bg-emerald-900/40 transition"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 hover:bg-emerald-900/40 transition"
             >
               <MessageSquare className="h-3.5 w-3.5" />
               <span>Open Bulk SMS</span>
@@ -556,7 +556,7 @@ export default function ContactsPage() {
           <span
             className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border font-semibold ${
               stats.optedOut > 0
-                ? "bg-rose-950/40 border-rose-500/30 text-rose-300"
+                ? "bg-rose-500/10 border-rose-500/30 text-rose-300"
                 : "bg-[#161b22] border-[#21262d] text-[#7d8590]"
             }`}
           >
@@ -633,7 +633,7 @@ export default function ContactsPage() {
 
         {/* Bulk action toolbar */}
         {selectedIds.size > 0 && (
-          <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-emerald-500/30 bg-emerald-950/20 px-4 py-3 text-xs">
+          <div className="flex flex-wrap items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/5 px-4 py-3 text-xs">
             <span className="font-bold text-emerald-300">{selectedIds.size} selected</span>
 
             <div className="flex items-center gap-1.5">
@@ -657,7 +657,7 @@ export default function ContactsPage() {
             <button
               type="button"
               onClick={handleBulkOptOut}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-rose-950/40 border border-rose-500/30 text-rose-300 hover:bg-rose-900/40 font-semibold"
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-300 hover:bg-rose-900/40 font-semibold"
             >
               <ShieldOff className="h-3.5 w-3.5" /> Opt Out
             </button>
@@ -765,7 +765,7 @@ export default function ContactsPage() {
                               {isOptedOut && (
                                 <span
                                   title="Opted out of campaigns"
-                                  className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-rose-950/50 text-rose-300 border border-rose-500/30 text-[9px] font-bold uppercase"
+                                  className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20 text-[9px] font-bold uppercase"
                                 >
                                   <ShieldOff className="h-2.5 w-2.5" /> Opt-out
                                 </span>
@@ -797,7 +797,7 @@ export default function ContactsPage() {
                             <div className="flex items-center justify-end gap-1.5">
                               <Link
                                 href="/test-sms"
-                                className="p-1.5 rounded-lg bg-emerald-950/40 border border-emerald-500/30 text-emerald-300 hover:bg-emerald-900/40 transition"
+                                className="p-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 hover:bg-emerald-900/40 transition"
                                 title="Send Test SMS"
                               >
                                 <Send className="h-3.5 w-3.5" />
@@ -816,7 +816,7 @@ export default function ContactsPage() {
                                 className={`p-1.5 rounded-lg border transition ${
                                   isOptedOut
                                     ? "bg-[#21262d] border-[#30363d] text-[#c9d1d9] hover:text-white"
-                                    : "bg-rose-950/40 border-rose-500/30 text-rose-300 hover:bg-rose-900/40"
+                                    : "bg-rose-500/10 border-rose-500/30 text-rose-300 hover:bg-rose-900/40"
                                 }`}
                                 title={isOptedOut ? "Opt back in" : "Opt out of campaigns"}
                               >
@@ -825,7 +825,7 @@ export default function ContactsPage() {
                               <button
                                 type="button"
                                 onClick={() => deleteContact(contact.id)}
-                                className="p-1.5 rounded-lg bg-rose-950/40 border border-rose-500/30 text-rose-300 hover:bg-rose-900/40 transition"
+                                className="p-1.5 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-300 hover:bg-rose-900/40 transition"
                                 title="Delete Contact"
                               >
                                 <Trash2 className="h-3.5 w-3.5" />
@@ -905,7 +905,7 @@ export default function ContactsPage() {
                   onChange={(e) => setPhone(e.target.value)}
                   className={`w-full rounded-xl border px-3 py-2 font-mono text-white outline-none ${
                     phoneValidation.isValid
-                      ? "border-emerald-500/40 bg-[#050810]"
+                      ? "border-emerald-500/30 bg-[#050810]"
                       : "border-[#21262d] bg-[#050810] focus:border-rose-500"
                   }`}
                 />
@@ -1016,7 +1016,7 @@ export default function ContactsPage() {
                 onClick={() => csvFileInputRef.current?.click()}
                 className={`flex items-center justify-center gap-2 rounded-xl border-2 border-dashed p-3 text-[11px] cursor-pointer transition ${
                   isDraggingCsv
-                    ? "border-emerald-500 bg-emerald-950/20 text-emerald-300"
+                    ? "border-emerald-500 bg-emerald-500/5 text-emerald-300"
                     : "border-[#30363d] text-[#7d8590] hover:border-[#30363d]"
                 }`}
               >

@@ -494,7 +494,7 @@ export default function HistoryPage() {
               type="button"
               onClick={handleManualRefresh}
               disabled={isSyncing}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-[#21262d] border border-[#30363d] hover:bg-[#21262d] text-[#e6edf3] shadow-sm transition disabled:opacity-60"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-[#161b22] border border-[#21262d] hover:bg-[#21262d] hover:border-[#30363d] text-[#e6edf3] shadow-sm transition disabled:opacity-60"
             >
               <RefreshCw className={`h-3.5 w-3.5 ${isSyncing ? "animate-spin" : ""}`} />
               <span>Refresh DB</span>
@@ -524,7 +524,7 @@ export default function HistoryPage() {
               <button
                 type="button"
                 onClick={handleClearHistory}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-rose-950/40 border border-rose-500/30 text-rose-300 hover:bg-rose-900/40 transition"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-rose-500/10 border border-rose-500/30 text-rose-300 hover:bg-rose-900/40 transition"
               >
                 <Trash2 className="h-3.5 w-3.5" />
                 <span>Clear All</span>
@@ -653,7 +653,7 @@ export default function HistoryPage() {
 
         {/* Bulk selection action bar */}
         {selectedIds.size > 0 && (
-          <div className="flex items-center justify-between rounded-2xl border border-emerald-500/30 bg-emerald-500/5 px-4 py-3">
+          <div className="flex items-center justify-between rounded-xl border border-emerald-500/30 bg-emerald-500/5 px-4 py-3">
             <span className="text-xs font-semibold text-emerald-300">
               {selectedIds.size} message{selectedIds.size > 1 ? "s" : ""} selected
             </span>
@@ -831,11 +831,11 @@ export default function HistoryPage() {
         const hasChanged = origStatus && origStatus !== selectedMessage.status;
         return (
           <div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#161b22] backdrop-blur-sm"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#050810]/80 backdrop-blur-sm"
             onClick={() => setSelectedMessage(null)}
           >
             <div
-              className="w-full max-w-md rounded-xl border border-[#21262d] bg-[#161b22] p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto"
+              className="w-full max-w-md rounded-xl border border-[#21262d] bg-[#0d1117] p-6 space-y-4 shadow-2xl shadow-black/60 max-h-[90vh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between border-b border-[#21262d] pb-3">
@@ -921,7 +921,7 @@ export default function HistoryPage() {
                 </div>
 
                 {selectedMessage.error && (
-                  <div className="p-3 rounded-xl bg-rose-950/40 border border-rose-500/30 text-rose-300">
+                  <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300">
                     <span className="font-bold block mb-1">Error Message:</span>
                     <span>{selectedMessage.error}</span>
                   </div>
@@ -954,7 +954,7 @@ export default function HistoryPage() {
                 <button
                   type="button"
                   onClick={() => setSelectedMessage(null)}
-                  className="px-4 py-1.5 rounded-lg bg-[#21262d] hover:bg-[#21262d] text-xs font-semibold text-white transition"
+                  className="px-4 py-1.5 rounded-lg bg-[#21262d] hover:bg-[#30363d] text-xs font-semibold text-white transition"
                 >
                   Close
                 </button>

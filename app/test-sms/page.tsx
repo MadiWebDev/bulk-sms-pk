@@ -244,8 +244,8 @@ function TestSmsInner() {
               <div
                 className={`p-3 rounded-xl border text-xs flex items-start gap-2.5 ${
                   phoneValidation.isValid
-                    ? "bg-emerald-950/30 border-emerald-500/20 text-emerald-200"
-                    : "bg-rose-950/30 border-rose-500/20 text-rose-200"
+                    ? "bg-emerald-500/5 border-emerald-500/20 text-emerald-300"
+                    : "bg-rose-500/5 border-rose-500/20 text-rose-300"
                 }`}
               >
                 {phoneValidation.isValid ? (
@@ -466,7 +466,7 @@ function TestSmsInner() {
                   type="button"
                   onClick={handleSendTest}
                   disabled={isSending || !phoneValidation.isValid}
-                  className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-lg shadow-emerald-600/20 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-lg shadow-emerald-900/40 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Send className={`h-4 w-4 ${isSending ? "animate-spin" : ""}`} />
                   <span>{isSending ? "Dispatching to Gateway..." : "Send Test SMS Now"}</span>

@@ -205,7 +205,7 @@ export default function TemplatesPage() {
               onClick={handleSyncToMongo}
               disabled={isSyncing}
               title="Reseed / sync all preset templates into MongoDB"
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-[#161b22] text-[#e6edf3] border border-[#30363d]/80 hover:bg-[#21262d] hover:text-white transition disabled:opacity-50"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-[#161b22] text-[#e6edf3] border border-[#21262d] hover:bg-[#21262d] hover:border-[#30363d] hover:text-white transition disabled:opacity-50"
             >
               <RefreshCw className={`h-3.5 w-3.5 text-emerald-400 ${isSyncing ? "animate-spin" : ""}`} />
               <span>{isSyncing ? "Syncing..." : "Sync to DB"}</span>
@@ -299,7 +299,7 @@ export default function TemplatesPage() {
                 setSearchQuery("");
                 setCategoryFilter("all");
               }}
-              className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-[#21262d] text-[#e6edf3] hover:bg-[#21262d] transition"
+              className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-[#161b22] border border-[#21262d] text-[#e6edf3] hover:bg-[#21262d] hover:border-[#30363d] transition"
             >
               Reset Filters
             </button>
@@ -384,7 +384,7 @@ export default function TemplatesPage() {
                     {/* TEST BUTTON WITH EXACT TEMPLATE ID */}
                     <Link
                       href={`/test-sms?templateId=${encodeURIComponent(tpl.id)}`}
-                      className="flex items-center gap-1 text-xs text-[#c9d1d9] hover:text-white px-2.5 py-1.5 rounded-lg bg-[#21262d] hover:bg-[#21262d] transition"
+            className="flex items-center gap-1 text-xs text-[#c9d1d9] hover:text-white px-2.5 py-1.5 rounded-lg bg-[#161b22] hover:bg-[#30363d] transition"
                       title="Test this template with a single phone number"
                     >
                       <Zap className="h-3 w-3 text-amber-400" />
@@ -469,7 +469,7 @@ export default function TemplatesPage() {
                         key={tag}
                         type="button"
                         onClick={() => handleInsertToken(tag)}
-                        className="px-1.5 py-0.5 bg-[#21262d] text-purple-300 rounded text-[10px] font-mono hover:bg-[#21262d]"
+                        className="px-1.5 py-0.5 bg-[#161b22] text-purple-400 border border-[#30363d] rounded text-[10px] font-mono hover:bg-[#21262d] hover:border-purple-500/30 transition"
                       >
                         +{`{${tag}}`}
                       </button>

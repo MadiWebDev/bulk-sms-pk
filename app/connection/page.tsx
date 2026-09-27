@@ -186,11 +186,11 @@ export default function ConnectionPage() {
           {/* Left: Gateway Settings Form (7 cols) */}
           <div className="lg:col-span-7 space-y-6">
             {/* Your Active Connection Status */}
-            <div className={`rounded-2xl border p-4 backdrop-blur-md ${
+            <div className={`rounded-xl border p-4 ${
               isGatewayOnline === true
-                ? "bg-emerald-950/30 border-emerald-500/30"
+                ? "bg-emerald-500/5 border-emerald-500/20"
                 : activeGatewayUsername
-                ? "bg-amber-950/20 border-amber-500/20"
+                ? "bg-amber-500/5 border-amber-500/20"
                 : "bg-[#0d1117] border-[#21262d]"
             }`}>
               <div className="flex items-center gap-3">
@@ -374,9 +374,9 @@ export default function ConnectionPage() {
             {/* Diagnostics Output Card */}
             {diagnosticsResult && (
               <div
-                className={`p-4 rounded-2xl border text-xs space-y-2 ${diagnosticsResult.ok
-                  ? "bg-emerald-950/30 border-emerald-500/30 text-emerald-200"
-                  : "bg-rose-950/30 border-rose-500/30 text-rose-200"
+                className={`p-4 rounded-xl border text-xs space-y-2 ${diagnosticsResult.ok
+                  ? "bg-emerald-500/5 border-emerald-500/20 text-emerald-300"
+                  : "bg-rose-500/5 border-rose-500/20 text-rose-300"
                   }`}
               >
                 <div className="flex items-center gap-2">
