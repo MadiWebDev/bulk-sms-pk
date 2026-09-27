@@ -9,45 +9,55 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const requestedUsername = searchParams.get("username")?.trim();
 
+    // Each visitor is scoped to ONLY their own credential.
+    // Without a username (new visitor), return unconfigured state.
+    if (!requestedUsername) {
+      return NextResponse.json({
+        storage: "none",
+        isConfigured: false,
+        activeGateway: null,
+        savedGateways: [],
+      });
+    }
+
     const db = await getDatabase();
-    let savedGateways: GatewayConfig[] = [];
+    let targetGateway: GatewayConfig | null = null;
 
     if (db) {
-      savedGateways = await db
+      // Only fetch THIS visitor's own credential — never the full collection
+      targetGateway = await db
         .collection<GatewayConfig>("gateway_credentials")
-        .find({})
-        .sort({ updatedAt: -1, createdAt: -1 })
-        .toArray();
+        .findOne({ username: requestedUsername }) || null;
     }
 
-    // Determine target gateway
-    let targetGateway: GatewayConfig | null = null;
-    if (requestedUsername && savedGateways.length > 0) {
-      targetGateway = savedGateways.find((g) => g.username === requestedUsername) || null;
-    }
-
-    // If not found by username or none requested, pick the most recent saved gateway
-    if (!targetGateway && savedGateways.length > 0) {
-      targetGateway = savedGateways[0];
-    }
-
-    // If still null, fallback to .env credentials
+    // If not found in DB, check .env fallback only if username matches
     if (!targetGateway) {
       const envUsername = process.env.SMSGATE_USERNAME || "";
       const envPassword = process.env.SMSGATE_PASSWORD || "";
-      const envDeviceId = process.env.SMSGATE_DEVICE_ID || "";
-      const envSimNumber = process.env.SMSGATE_SIM_NUMBER || "1";
-      const envBaseUrl = process.env.SMS_GATE_BASE_URL || "https://api.sms-gate.app/3rdparty/v1";
+      if (envUsername && envUsername === requestedUsername) {
+        const envDeviceId = process.env.SMSGATE_DEVICE_ID || "";
+        const envSimNumber = process.env.SMSGATE_SIM_NUMBER || "1";
+        const envBaseUrl = process.env.SMS_GATE_BASE_URL || "https://api.sms-gate.app/3rdparty/v1";
+        targetGateway = {
+          username: envUsername,
+          password: envPassword,
+          baseUrl: envBaseUrl,
+          deviceId: envDeviceId,
+          simNumber: Number(envSimNumber) || 1,
+          isVerified: false,
+          name: `Gateway (${envUsername})`,
+        };
+      }
+    }
 
-      targetGateway = {
-        username: envUsername,
-        password: envPassword,
-        baseUrl: envBaseUrl,
-        deviceId: envDeviceId,
-        simNumber: Number(envSimNumber) || 1,
-        isVerified: false,
-        name: envUsername ? `Gateway (${envUsername})` : "Default Gateway",
-      };
+    if (!targetGateway) {
+      // Username not found — this visitor has no saved credential yet
+      return NextResponse.json({
+        storage: "none",
+        isConfigured: false,
+        activeGateway: null,
+        savedGateways: [],
+      });
     }
 
     const maskedUsername = targetGateway.username
@@ -56,23 +66,26 @@ export async function GET(req: NextRequest) {
         : "***"
       : "";
 
-    // Return the active gateway config + list of all saved credentials
+    // Return ONLY this visitor's own gateway — never expose other users' credentials
     return NextResponse.json({
-      storage: savedGateways.length > 0 ? "mongodb" : "env",
+      storage: "mongodb",
       isConfigured: Boolean(targetGateway.username && targetGateway.password),
       activeGateway: {
         ...targetGateway,
         maskedUsername,
       },
-      savedGateways: savedGateways.map((g) => ({
-        username: g.username,
-        name: g.name || `Android (${g.username})`,
-        baseUrl: g.baseUrl,
-        deviceId: g.deviceId,
-        simNumber: g.simNumber,
-        isVerified: g.isVerified ?? true,
-        updatedAt: g.updatedAt,
-      })),
+      // savedGateways contains only this user's own single credential
+      savedGateways: [
+        {
+          username: targetGateway.username,
+          name: targetGateway.name || `Android (${targetGateway.username})`,
+          baseUrl: targetGateway.baseUrl,
+          deviceId: targetGateway.deviceId,
+          simNumber: targetGateway.simNumber,
+          isVerified: targetGateway.isVerified ?? true,
+          updatedAt: (targetGateway as GatewayConfig & { updatedAt?: string }).updatedAt,
+        },
+      ],
     });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "Failed to retrieve gateway credentials";

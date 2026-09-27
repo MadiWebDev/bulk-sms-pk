@@ -8,26 +8,19 @@ import {
   Radio,
   Database,
   Smartphone,
-  ShieldCheck,
   CheckCircle2,
   AlertTriangle,
   ExternalLink,
   Eye,
   EyeOff,
   Save,
-  Download,
-  Upload,
-  RefreshCw,
   HardDrive,
-  Info,
+  ShieldCheck,
 } from "lucide-react";
 
 export default function ConnectionPage() {
   const {
     activeGatewayUsername,
-    savedGateways,
-    setActiveGatewayUsername,
-    deleteSavedGateway,
     gatewayConfig,
     saveGatewayConfig,
     isGatewayOnline,
@@ -192,89 +185,63 @@ export default function ConnectionPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* Left: Gateway Settings Form (7 cols) */}
           <div className="lg:col-span-7 space-y-6">
-            {/* Saved Gateway Credentials / Accounts */}
-            {savedGateways.length > 0 && (
-              <div className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-5 backdrop-blur-md space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
-                    <Smartphone className="h-4 w-4 text-emerald-400" />
-                    Saved Gateway Credentials in Database
-                  </span>
-                  <span className="text-[10px] text-slate-400 font-mono">
-                    {savedGateways.length} Credential{savedGateways.length > 1 ? "s" : ""}
-                  </span>
+            {/* Your Active Connection Status */}
+            <div className={`rounded-2xl border p-4 backdrop-blur-md ${
+              isGatewayOnline === true
+                ? "bg-emerald-950/30 border-emerald-500/30"
+                : activeGatewayUsername
+                ? "bg-amber-950/20 border-amber-500/20"
+                : "bg-slate-900/60 border-slate-800/80"
+            }`}>
+              <div className="flex items-center gap-3">
+                <div className={`flex h-9 w-9 items-center justify-center rounded-xl border shrink-0 ${
+                  isGatewayOnline === true
+                    ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40"
+                    : activeGatewayUsername
+                    ? "bg-amber-500/15 text-amber-400 border-amber-500/30"
+                    : "bg-slate-800 text-slate-400 border-slate-700"
+                }`}>
+                  {isGatewayOnline === true ? (
+                    <ShieldCheck className="h-4 w-4" />
+                  ) : (
+                    <Smartphone className="h-4 w-4" />
+                  )}
                 </div>
-                <p className="text-[11px] text-slate-400">
-                  Select a gateway credential below to view and manage its own contact list and message history.
-                </p>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
-                  {savedGateways.map((g) => {
-                    const isActive = g.username === activeGatewayUsername;
-                    return (
-                      <div
-                        key={g.username}
-                        className={`p-3 rounded-xl border text-xs flex flex-col justify-between gap-2 transition-all ${
-                          isActive
-                            ? "bg-emerald-950/40 border-emerald-500/40 shadow-sm"
-                            : "bg-slate-950/80 border-slate-800 hover:border-slate-700"
-                        }`}
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="min-w-0">
-                            <div className="font-bold text-white truncate flex items-center gap-1.5">
-                              <span>{g.name || g.username}</span>
-                              {isActive && (
-                                <span className="text-[9px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.2 rounded font-semibold border border-emerald-500/30">
-                                  ACTIVE
-                                </span>
-                              )}
-                            </div>
-                            <div className="text-[10px] text-slate-400 font-mono mt-0.5">
-                              Login: {g.username} &bull; SIM {g.simNumber || 1}
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center justify-between pt-1 border-t border-slate-800/60">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setActiveGatewayUsername(g.username);
-                              showToast(
-                                "info",
-                                `Switched to "${g.username}". Contacts & history updated.`,
-                                "Gateway Switched"
-                              );
-                            }}
-                            disabled={isActive}
-                            className={`px-2.5 py-1 rounded-lg text-[10px] font-semibold transition ${
-                              isActive
-                                ? "bg-emerald-500/20 text-emerald-400 cursor-default"
-                                : "bg-slate-800 hover:bg-slate-700 text-white"
-                            }`}
-                          >
-                            {isActive ? "Active Credential" : "Switch to This"}
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (confirm(`Remove gateway credentials for "${g.username}"?`)) {
-                                deleteSavedGateway(g.username);
-                              }
-                            }}
-                            className="text-[10px] text-rose-400 hover:text-rose-300 transition"
-                          >
-                            Delete
-                          </button>
-                        </div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">
+                    Your Active Connection
+                  </div>
+                  {activeGatewayUsername ? (
+                    <>
+                      <div className="text-sm font-bold text-white truncate">
+                        {gatewayConfig.name || activeGatewayUsername}
                       </div>
-                    );
-                  })}
+                      <div className="text-[11px] text-slate-400 font-mono">
+                        Login: <span className="text-emerald-400">{activeGatewayUsername}</span>
+                        {gatewayConfig.simNumber ? ` • SIM ${gatewayConfig.simNumber}` : ""}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-sm text-slate-400">
+                      No gateway configured yet — enter your credentials below.
+                    </div>
+                  )}
                 </div>
+                <span className={`shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
+                  isGatewayOnline === true
+                    ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
+                    : isGatewayOnline === false
+                    ? "bg-rose-500/10 text-rose-400 border-rose-500/30"
+                    : "bg-slate-800 text-slate-400 border-slate-700"
+                }`}>
+                  {isGatewayOnline === true
+                    ? `Online • ${gatewayLatency}ms`
+                    : isGatewayOnline === false
+                    ? "Offline"
+                    : "Not Tested"}
+                </span>
               </div>
-            )}
+            </div>
 
             {/* 1. Android Gateway Settings Form */}
             <div className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-5 backdrop-blur-md space-y-4">
@@ -301,16 +268,8 @@ export default function ConnectionPage() {
                 </span>
               </div>
 
-              <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800 text-xs flex items-center justify-between">
-                <div>
-                  <span className="text-slate-400 block text-[10px]">Active Android Account:</span>
-                  <span className="text-emerald-400 font-bold font-mono">
-                    {activeGatewayUsername || "None (Enter credentials below)"}
-                  </span>
-                </div>
-                <span className="text-[10px] text-slate-500">
-                  Tested first before saving in database
-                </span>
+              <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800 text-xs text-slate-400">
+                Enter your Android gateway credentials below. They are tested live before being saved — only you can access your own connection.
               </div>
 
               <form onSubmit={handleSaveGateway} className="space-y-4 text-xs">
@@ -362,6 +321,7 @@ export default function ConnectionPage() {
                     <input
                       type="text"
                       value={deviceId}
+                      required
                       onChange={(e) => setDeviceId(e.target.value)}
                       placeholder="e.g. G3dhj75T987F3ertfgw&4"
                       className="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2 text-white font-mono outline-none focus:border-emerald-500"

@@ -239,13 +239,21 @@ export function SmsProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Fetch gateway configs from server
+  // Fetch gateway configs from server — scoped to this visitor's own credential only
   const loadGatewayConfigs = useCallback(async (preferredUsername?: string) => {
     try {
-      const query = preferredUsername ? `?username=${encodeURIComponent(preferredUsername)}` : "";
-      const res = await fetch(`/api/sms/config${query}`, { cache: "no-store" });
+      // Only request credentials for the specific username this visitor owns.
+      // Without a username we skip the fetch — new visitors have no saved config yet.
+      if (!preferredUsername) {
+        setEnvLoaded(true);
+        return;
+      }
+
+      const res = await fetch(`/api/sms/config?username=${encodeURIComponent(preferredUsername)}`, { cache: "no-store" });
       if (res.ok) {
         const data = await res.json();
+
+        // data.savedGateways now only contains this user's own credential (or []).
         if (Array.isArray(data.savedGateways)) {
           setSavedGateways(data.savedGateways);
         }
@@ -267,6 +275,16 @@ export function SmsProvider({ children }: { children: React.ReactNode }) {
             setMaskedEnvUser(active.maskedUsername);
             setHasEnvCredentials(Boolean(data.isConfigured));
           }
+        } else {
+          // activeGateway is null — this username has no saved credential yet
+          setGatewayConfig({
+            username: "",
+            password: "",
+            baseUrl: "https://api.sms-gate.app/3rdparty/v1",
+            deviceId: "",
+            simNumber: 1,
+          });
+          setSavedGateways([]);
         }
       }
     } catch {
