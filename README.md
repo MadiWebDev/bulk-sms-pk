@@ -37,13 +37,3 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 
 
 
-MSMobo 
-
-Premium Mobile Accessories — Chargers, Earbuds, Cables, Covers & More.
-
-Shop Now: https://www.msmobo.com/
-
-Get a Discount with Code: WELCOME10
-
-MSMobo — Mobile Accessories & Repairing Center.
-
