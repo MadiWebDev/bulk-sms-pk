@@ -5,6 +5,11 @@ export const runtime = "nodejs";
 
 const DEFAULT_BASE_URL = "https://api.sms-gate.app/3rdparty/v1";
 
+// CONCURRENCY = 1: Android's SMS service is single-threaded. Parallel requests
+// cause the permission dialog to re-appear for every concurrent job and saturate
+// the send queue, resulting in failures. Always send one request at a time.
+const CONCURRENCY = 1;
+
 interface SendItem {
   phoneNumbers: string[];
   text: string;
@@ -17,8 +22,10 @@ interface SendRequestBody {
   deviceId?: string;
   simNumber?: number;
   withDeliveryReport?: boolean;
-  ttl?: number; // seconds
-  delayMs?: number; // throttling delay between requests
+  ttl?: number;
+  gatewayUsername?: string; // for DB scoping
+  campaignId?: string;
+  campaignTitle?: string;
   items: SendItem[];
 }
 
@@ -31,8 +38,6 @@ export interface ItemResult {
   error?: string;
 }
 
-const CONCURRENCY = 3; // Keep conservative concurrency to prevent Android service queue saturation
-
 export async function POST(req: NextRequest) {
   let body: SendRequestBody;
   try {
@@ -43,21 +48,26 @@ export async function POST(req: NextRequest) {
 
   const username = body.username?.trim() || process.env.SMSGATE_USERNAME || "";
   const password = body.password?.trim() || process.env.SMSGATE_PASSWORD || "";
-  const baseUrl = (body.baseUrl?.trim() || process.env.SMS_GATE_BASE_URL || DEFAULT_BASE_URL).replace(/\/$/, "");
+  const baseUrl = (
+    body.baseUrl?.trim() ||
+    process.env.SMS_GATE_BASE_URL ||
+    process.env.SMSGATE_API_URL ||
+    DEFAULT_BASE_URL
+  ).replace(/\/$/, "");
   const deviceId = body.deviceId?.trim() || process.env.SMSGATE_DEVICE_ID || "";
   const simNumber =
     typeof body.simNumber === "number"
       ? body.simNumber
       : Number(process.env.SMSGATE_SIM_NUMBER || "1") || 1;
   const withDeliveryReport = body.withDeliveryReport ?? true;
-  const ttl = body.ttl ?? 3600;
-  const delayMs = typeof body.delayMs === "number" ? Math.max(0, Math.min(body.delayMs, 5000)) : 200;
+  const ttl = body.ttl ?? 86400; // 24h — gives Android more time to deliver queued messages
+  const gatewayUsername = body.gatewayUsername?.trim() || username;
 
   if (!username || !password) {
     return NextResponse.json(
       {
         error:
-          "Missing gateway credentials. Provide username & password or configure SMSGATE_USERNAME and SMSGATE_PASSWORD in .env.",
+          "Missing gateway credentials. Provide username & password or set SMSGATE_USERNAME / SMSGATE_PASSWORD in .env.",
       },
       { status: 400 }
     );
@@ -65,13 +75,16 @@ export async function POST(req: NextRequest) {
 
   const { items } = body;
   if (!Array.isArray(items) || items.length === 0) {
-    return NextResponse.json({ error: "No messages to send. Recipient list is empty." }, { status: 400 });
+    return NextResponse.json(
+      { error: "No messages to send. items array is empty." },
+      { status: 400 }
+    );
   }
 
-  // Pre-validate that all items have valid Pakistan numbers and non-empty text
+  // Validate all items before touching the gateway
   for (let idx = 0; idx < items.length; idx++) {
     const item = items[idx];
-    if (!item.text || !item.text.trim()) {
+    if (!item.text?.trim()) {
       return NextResponse.json(
         { error: `Item #${idx + 1}: message text cannot be empty.` },
         { status: 400 }
@@ -87,7 +100,6 @@ export async function POST(req: NextRequest) {
 
   const authHeader = "Basic " + Buffer.from(`${username}:${password}`).toString("base64");
   const results: ItemResult[] = new Array(items.length);
-
   let cursor = 0;
 
   async function worker() {
@@ -95,7 +107,7 @@ export async function POST(req: NextRequest) {
       const index = cursor++;
       const item = items[index];
 
-      // Strict Pakistan verification and sanitization for every recipient
+      // Validate and normalise phone numbers for this item
       const validatedPhones: string[] = [];
       const invalidReasons: string[] = [];
 
@@ -104,7 +116,7 @@ export async function POST(req: NextRequest) {
         if (check.isValid && check.e164) {
           validatedPhones.push(check.e164);
         } else {
-          invalidReasons.push(`${phone}: ${check.reason || "Invalid Pakistani number"}`);
+          invalidReasons.push(`${phone}: ${check.reason || "invalid Pakistani number"}`);
         }
       }
 
@@ -112,30 +124,28 @@ export async function POST(req: NextRequest) {
         results[index] = {
           phoneNumbers: item.phoneNumbers,
           ok: false,
-          error: `Rejected: No valid Pakistan mobile numbers (${invalidReasons.join("; ")})`,
+          error: `Rejected: no valid Pakistan mobile numbers (${invalidReasons.join("; ")})`,
         };
         continue;
       }
 
+      // One request per item — no internal throttling delay here.
+      // The caller (bulk-sms page) is responsible for pacing between items
+      // so the Android device is never overwhelmed.
       const payload: Record<string, unknown> = {
         textMessage: { text: item.text.trim() },
         phoneNumbers: validatedPhones,
         withDeliveryReport,
         ttl,
         simNumber,
+        priority: 10, // lower priority = less chance of triggering Android battery/rate warnings
       };
 
       if (deviceId) {
         payload.deviceId = deviceId;
       }
 
-      // Throttling delay to prevent cellular queue congestion
-      if (delayMs > 0 && index > 0) {
-        await new Promise((r) => setTimeout(r, delayMs));
-      }
-
       try {
-        // Correct endpoint per sms-gate.app specification: /3rdparty/v1/messages
         const res = await fetch(`${baseUrl}/messages`, {
           method: "POST",
           headers: {
@@ -170,52 +180,61 @@ export async function POST(req: NextRequest) {
         results[index] = {
           phoneNumbers: validatedPhones,
           ok: false,
-          error: err instanceof Error ? err.message : "Network error contacting SMS gateway",
+          error:
+            err instanceof Error ? err.message : "Network error contacting SMS gateway",
         };
       }
     }
   }
 
+  // CONCURRENCY = 1: strictly sequential — no parallel gateway requests
   const poolSize = Math.min(CONCURRENCY, items.length);
   await Promise.all(Array.from({ length: poolSize }, () => worker()));
 
-  // Asynchronously log to MongoDB if connected
+  // Persist to MongoDB (non-blocking)
   try {
     const { getDatabase } = await import("@/lib/mongodb");
     const db = await getDatabase();
     if (db) {
-      const recordsToInsert: any[] = [];
       const timestamp = new Date().toISOString();
+      const records: Record<string, unknown>[] = [];
 
       items.forEach((item, idx) => {
         const res = results[idx];
-        const primaryPhone = (res?.phoneNumbers?.[0] || item.phoneNumbers[0] || "");
-        const check = validatePakistanPhone(primaryPhone);
-        
-        recordsToInsert.push({
-          id: res?.id || `msg_${Date.now()}_${idx}_${Math.random().toString(36).substring(2, 6)}`,
-          phone: check.e164 || primaryPhone,
-          nationalPhone: check.national || primaryPhone,
-          operator: check.operator || "Unknown",
-          text: item.text,
-          status: res?.ok ? "queued" : "failed",
-          gatewayId: res?.id,
-          error: res?.error,
-          timestamp,
-          campaignId: (body as any).campaignId || undefined,
-          campaignTitle: (body as any).campaignTitle || undefined,
-          simNumber,
+        // When one item has multiple phoneNumbers, store a record per phone
+        const phones = res?.phoneNumbers?.length ? res.phoneNumbers : item.phoneNumbers;
+        phones.forEach((phone) => {
+          const check = validatePakistanPhone(phone);
+          records.push({
+            id:
+              res?.id
+                ? `${res.id}_${phone.replace(/\D/g, "").slice(-4)}`
+                : `msg_${Date.now()}_${idx}_${Math.random().toString(36).slice(2, 6)}`,
+            gatewayUsername,
+            userId: gatewayUsername,
+            phone: check.e164 || phone,
+            nationalPhone: check.national || phone,
+            operator: check.operator || "Unknown",
+            text: item.text,
+            status: res?.ok ? "queued" : "failed",
+            gatewayId: res?.id,
+            error: res?.error,
+            timestamp,
+            campaignId: body.campaignId,
+            campaignTitle: body.campaignTitle,
+            simNumber,
+          });
         });
       });
 
-      if (recordsToInsert.length > 0) {
-        db.collection("messages").insertMany(recordsToInsert).catch((e) => {
-          console.warn("Could not auto-insert messages to DB:", e);
-        });
+      if (records.length > 0) {
+        db.collection("messages")
+          .insertMany(records)
+          .catch((e) => console.warn("[send] MongoDB insert failed:", e));
       }
     }
   } catch {
-    // Non-blocking if mongo is not configured
+    // Non-blocking — app works without MongoDB
   }
 
   return NextResponse.json({ results });
