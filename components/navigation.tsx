@@ -47,7 +47,7 @@ export function Navigation() {
   const statusDot =
     isCheckingGateway ? "bg-amber-400 animate-pulse" :
     isGatewayOnline === true ? "bg-emerald-400" :
-    isGatewayOnline === false ? "bg-rose-400" : "bg-slate-600";
+    isGatewayOnline === false ? "bg-rose-400" : "bg-[#484f58]";
 
   const statusText =
     isCheckingGateway ? "Pinging…" :
