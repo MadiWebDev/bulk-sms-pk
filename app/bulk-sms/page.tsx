@@ -197,6 +197,10 @@ function BulkSmsInner() {
   const [preparedRowsSnapshot, setPreparedRowsSnapshot] = useState<ProcessRow[]>([]);
   const [isLaunching, setIsLaunching] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  /** Set to true to abort the client-side burst continuation loop */
+  const abortBurstRef = useRef<boolean>(false);
+  /** AbortController for the currently in-flight burst fetch — aborted on Stop */
+  const burstAbortControllerRef = useRef<AbortController | null>(null);
 
   // ── Stream UI ───────────────────────────────────────────────────────────────
   const [streamSearch, setStreamSearch] = useState("");
@@ -293,6 +297,12 @@ function BulkSmsInner() {
   const sampleAttrs = useMemo(() => calculateSMSAttributes(messageTemplate), [messageTemplate]);
 
   // ── Server polling ──────────────────────────────────────────────────────────
+  /**
+   * Polls the server for campaign progress.
+   * Also acts as the "reconnect" path: if the user reloads the page while a
+   * campaign is running (no burst loop active), polling drives the UI updates
+   * and saves the completed campaign to history.
+   */
   const pollProgress = useCallback(async (cid: string) => {
     try {
       const res = await fetch(`/api/campaigns/run?campaignId=${encodeURIComponent(cid)}`);
@@ -321,17 +331,19 @@ function BulkSmsInner() {
             simNumber: selectedSim,
           };
           addCampaign(rec);
-          showToast(
-            data.failedCount === 0 ? "success" : "warning",
-            `Campaign done: ${data.sentCount} sent${data.failedCount > 0 ? `, ${data.failedCount} failed` : ""}.`,
-            "Campaign Finished"
-          );
-        } else {
-          showToast("warning", "Campaign was cancelled.", "Cancelled");
+          // Only show toast here if the burst loop is NOT active
+          // (i.e., user reloaded the page and is only polling)
+          if (abortBurstRef.current === false && !isLaunching) {
+            showToast(
+              data.failedCount === 0 ? "success" : "warning",
+              `Campaign done: ${data.sentCount} sent${data.failedCount > 0 ? `, ${data.failedCount} failed` : ""}.`,
+              "Campaign Finished"
+            );
+          }
         }
       }
     } catch {}
-  }, [messageTemplate, selectedSim, addCampaign, showToast]);
+  }, [messageTemplate, selectedSim, addCampaign, showToast, isLaunching]);
 
   // Start polling when activeCampaignId is set
   useEffect(() => {
@@ -387,6 +399,7 @@ function BulkSmsInner() {
     }
 
     setIsLaunching(true);
+    abortBurstRef.current = false;
     const campaignId = `cmp_${Date.now()}`;
 
     const messages = rows.map((r) => ({
@@ -397,54 +410,141 @@ function BulkSmsInner() {
       rowIndex: r.index,
     }));
 
+    const buildBody = (resumeFrom: number) => ({
+      campaignId,
+      campaignTitle,
+      gatewayUsername: activeGatewayUsername || gatewayConfig.username,
+      messages,
+      resumeFrom,
+      config: {
+        username: gatewayConfig.username,
+        password: gatewayConfig.password,
+        baseUrl: gatewayConfig.baseUrl,
+        deviceId: gatewayConfig.deviceId,
+        simNumber: selectedSim,
+        delayMs,
+        jitterEnabled,
+        batchSize,
+      },
+    });
+
+    // Set up optimistic UI state before first burst
+    localStorage.setItem(ACTIVE_CAMPAIGN_KEY, campaignId);
+    setActiveCampaignId(campaignId);
+    setPreparedRowsSnapshot(rows);
+    setServerProgress({
+      campaignId,
+      campaignTitle,
+      status: "running",
+      totalMessages: rows.length,
+      sentCount: 0,
+      failedCount: 0,
+      currentIndex: 0,
+      startedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
+
+    // ── Burst continuation loop ────────────────────────────────────────────────
+    // Each POST call processes messages for up to 8 s (BURST_TIMEOUT_MS on server),
+    // then returns { done, currentIndex }. We immediately re-POST until done.
+    // burstAbortControllerRef holds the AbortController for the current fetch so
+    // handleCancelServerCampaign can abort it instantly without waiting 8 s.
+    let resumeFrom = 0;
+    let launched = false;
     try {
-      const res = await fetch("/api/campaigns/run", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          campaignId,
-          campaignTitle,
-          gatewayUsername: activeGatewayUsername || gatewayConfig.username,
-          messages,
-          config: {
-            username: gatewayConfig.username,
-            password: gatewayConfig.password,
-            baseUrl: gatewayConfig.baseUrl,
-            deviceId: gatewayConfig.deviceId,
-            simNumber: selectedSim,
-            delayMs,
-            jitterEnabled,
-            batchSize,
-          },
-        }),
-      });
+      while (!abortBurstRef.current) {
+        // Create a fresh AbortController for this fetch
+        const ac = new AbortController();
+        burstAbortControllerRef.current = ac;
 
-      const data = await res.json();
-      if (!res.ok || !data.ok) {
-        showToast("danger", data.error || "Failed to start campaign on server.", "Launch Failed");
-        return;
+        let res: Response;
+        try {
+          res = await fetch("/api/campaigns/run", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(buildBody(resumeFrom)),
+            signal: ac.signal,
+          });
+        } catch (fetchErr) {
+          // fetch was aborted by Stop button — clean exit
+          if ((fetchErr as Error)?.name === "AbortError") break;
+          throw fetchErr;
+        } finally {
+          burstAbortControllerRef.current = null;
+        }
+
+        // Check abort flag again after the fetch resolved
+        if (abortBurstRef.current) break;
+
+        const data = await res.json();
+
+        // Check abort flag after json parse too
+        if (abortBurstRef.current) break;
+
+        if (!res.ok || !data.ok) {
+          if (!launched) {
+            // First call failed — show error and bail
+            showToast("danger", data.error || "Failed to start campaign on server.", "Launch Failed");
+            localStorage.removeItem(ACTIVE_CAMPAIGN_KEY);
+            setActiveCampaignId(null);
+            setServerProgress(null);
+          } else {
+            // Mid-campaign failure — log it but let polling handle status
+            console.error("[burst] POST error mid-campaign:", data.error);
+          }
+          break;
+        }
+
+        if (!launched) {
+          launched = true;
+          showToast("success", `Campaign started — ${rows.length} messages queued. Processing now…`, "Running");
+          setIsLaunching(false);
+        }
+
+        // Update optimistic progress from the response
+        setServerProgress((prev) =>
+          prev
+            ? {
+                ...prev,
+                currentIndex: data.currentIndex ?? prev.currentIndex,
+                sentCount: data.sentCount ?? prev.sentCount,
+                failedCount: data.failedCount ?? prev.failedCount,
+                status: data.done ? (data.cancelled ? "cancelled" : "completed") : "running",
+              }
+            : prev
+        );
+
+        if (data.done || data.cancelled) {
+          // Campaign finished naturally or was cancelled
+          localStorage.removeItem(ACTIVE_CAMPAIGN_KEY);
+          setActiveCampaignId(null);
+          if (!data.cancelled) {
+            showToast(
+              data.failedCount === 0 ? "success" : "warning",
+              `Campaign done: ${data.sentCount} sent${data.failedCount > 0 ? `, ${data.failedCount} failed` : ""}.`,
+              "Campaign Finished"
+            );
+          } else {
+            showToast("warning", "Campaign was cancelled.", "Cancelled");
+          }
+          break;
+        }
+
+        // Not done yet — advance resumeFrom and send next burst
+        resumeFrom = data.currentIndex ?? resumeFrom;
       }
-
-      // Persist campaignId so polling survives a page reload
-      localStorage.setItem(ACTIVE_CAMPAIGN_KEY, campaignId);
-      setActiveCampaignId(campaignId);
-      setPreparedRowsSnapshot(rows);
-      setServerProgress({
-        campaignId,
-        campaignTitle,
-        status: "running",
-        totalMessages: rows.length,
-        sentCount: 0,
-        failedCount: 0,
-        currentIndex: 0,
-        startedAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      });
-
-      showToast("success", `Campaign started on server — ${rows.length} messages queued. You can close this tab safely.`, "Running on Server");
     } catch (err) {
-      showToast("danger", err instanceof Error ? err.message : "Network error", "Launch Failed");
+      if (!launched) {
+        showToast("danger", err instanceof Error ? err.message : "Network error", "Launch Failed");
+        localStorage.removeItem(ACTIVE_CAMPAIGN_KEY);
+        setActiveCampaignId(null);
+        setServerProgress(null);
+      } else {
+        // Mid-campaign network error — polling will detect the stall
+        console.error("[burst] Network error mid-campaign:", err);
+      }
     } finally {
+      burstAbortControllerRef.current = null;
       setIsLaunching(false);
     }
   }, [gatewayConfig, activeGatewayUsername, campaignTitle, selectedSim, delayMs, jitterEnabled, batchSize, showToast]);
@@ -481,9 +581,26 @@ function BulkSmsInner() {
 
   const handleCancelServerCampaign = async () => {
     if (!activeCampaignId) return;
+
+    // 1. Stop the client burst loop flag
+    abortBurstRef.current = true;
+
+    // 2. Abort any in-flight fetch immediately — don't wait 8 s for it to finish
+    burstAbortControllerRef.current?.abort();
+    burstAbortControllerRef.current = null;
+
+    // 3. Immediately reflect "stopping" in the UI
+    setServerProgress((prev) =>
+      prev ? { ...prev, status: "cancelling" } : prev
+    );
+    setActiveCampaignId(null);
+    localStorage.removeItem(ACTIVE_CAMPAIGN_KEY);
+
+    // 4. Tell the server to mark the campaign as cancelling in MongoDB
+    //    (so any server-side burst that's mid-run also stops)
     try {
       await fetch(`/api/campaigns/run?campaignId=${encodeURIComponent(activeCampaignId)}`, { method: "DELETE" });
-      showToast("warning", "Cancel signal sent — campaign will stop after the current message.", "Stopping");
+      showToast("warning", "Campaign stopped.", "Stopped");
     } catch {}
   };
 
