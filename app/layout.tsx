@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { SmsProvider } from "@/lib/context/sms-context";
@@ -11,6 +11,9 @@ const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"]
 export const metadata: Metadata = {
   title: { default: "SMS Gateway PK", template: "%s · SMS Gateway PK" },
   description: "Enterprise bulk SMS platform for Pakistani mobile networks — Jazz, Zong, Telenor, Ufone, SCOM.",
+};
+
+export const viewport: Viewport = {
   themeColor: "#050810",
 };
 
