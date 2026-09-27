@@ -225,7 +225,7 @@ export default function HistoryPage() {
   };
 
   const SortIcon = ({ field }: { field: SortField }) => {
-    if (sortField !== field) return <ArrowUpDown className="h-3 w-3 text-slate-600" />;
+    if (sortField !== field) return <ArrowUpDown className="h-3 w-3 text-[#30363d]" />;
     return sortDir === "asc" ? (
       <ArrowUp className="h-3 w-3 text-emerald-400" />
     ) : (
@@ -439,9 +439,9 @@ export default function HistoryPage() {
     dateTo !== "";
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 pb-24">
+    <div className="min-h-screen bg-[#050810] text-[#e6edf3] pb-24">
       {/* Top Header */}
-      <div className="border-b border-slate-800/60 bg-gradient-to-r from-slate-950 via-slate-900/60 to-slate-950 py-6 px-4 sm:px-6">
+      <div className="border-b border-[#21262d] bg-[#0d1117] py-5 px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -471,20 +471,20 @@ export default function HistoryPage() {
             <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-white">
               Message History & Logs
             </h1>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <p className="text-xs text-[#7d8590] mt-0.5">
               Comprehensive log of all cellular messages — auto-syncs from DB every minute.
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5">
-            <div className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-400">
+            <div className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#161b22] border border-[#21262d] text-xs text-[#7d8590]">
               <Clock className="h-3.5 w-3.5 text-emerald-500" />
               <span>
                 {lastSyncedAt
                   ? `Synced ${lastSyncedAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}`
                   : "Waiting for first sync"}
               </span>
-              <span className="text-slate-600">·</span>
+              <span className="text-[#30363d]">·</span>
               <span className="text-emerald-400 font-mono font-semibold tabular-nums">
                 {nextSyncIn}s
               </span>
@@ -494,7 +494,7 @@ export default function HistoryPage() {
               type="button"
               onClick={handleManualRefresh}
               disabled={isSyncing}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-800 border border-slate-700 hover:bg-slate-700 text-slate-200 shadow-sm transition disabled:opacity-60"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-[#21262d] border border-[#30363d] hover:bg-[#21262d] text-[#e6edf3] shadow-sm transition disabled:opacity-60"
             >
               <RefreshCw className={`h-3.5 w-3.5 ${isSyncing ? "animate-spin" : ""}`} />
               <span>Refresh DB</span>
@@ -514,7 +514,7 @@ export default function HistoryPage() {
               type="button"
               onClick={handleExportCSV}
               disabled={filteredMessages.length === 0}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-slate-900 border border-slate-800 text-slate-300 hover:text-white transition disabled:opacity-50"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-[#161b22] border border-[#21262d] text-[#c9d1d9] hover:text-white transition disabled:opacity-50"
             >
               <Download className="h-3.5 w-3.5" />
               <span>Export CSV</span>
@@ -534,7 +534,7 @@ export default function HistoryPage() {
         </div>
       </div>
 
-      <main className="mx-auto max-w-7xl px-4 sm:px-6 pt-6 space-y-6">
+      <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
         {/* Stats Dashboard */}
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
           <StatCard label="Total Messages" value={stats.total} icon={<Send className="h-4 w-4" />} tone="slate" />
@@ -550,13 +550,13 @@ export default function HistoryPage() {
         </div>
 
         {/* Sync stats bar */}
-        <div className="flex items-center gap-3 text-xs text-slate-500 flex-wrap">
+        <div className="flex items-center gap-3 text-xs text-[#484f58] flex-wrap">
           <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
           <span>
             Auto-sync every <span className="text-emerald-400 font-semibold">60 s</span> — pulls latest records from MongoDB.
             {syncCount > 0 && (
               <span className="ml-2">
-                Completed <span className="text-slate-300 font-semibold">{syncCount}</span> sync{syncCount > 1 ? "s" : ""} this session.
+                Completed <span className="text-[#c9d1d9] font-semibold">{syncCount}</span> sync{syncCount > 1 ? "s" : ""} this session.
               </span>
             )}
           </span>
@@ -568,16 +568,16 @@ export default function HistoryPage() {
         </div>
 
         {/* Search & Filter Bar */}
-        <div className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-4 backdrop-blur-md space-y-3">
+        <div className="rounded-xl bg-[#0d1117] border border-[#21262d] p-4 space-y-3">
           <div className="flex flex-col md:flex-row gap-3 items-center justify-between">
             <div className="relative flex-1 w-full">
-              <Search className="h-4 w-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+              <Search className="h-4 w-4 text-[#484f58] absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 placeholder="Search by phone number, message text, or Gateway ID..."
-                className="w-full rounded-xl bg-slate-950 border border-slate-800 pl-9 pr-4 py-2 text-xs text-white placeholder-slate-500 outline-none focus:border-emerald-500 transition"
+                className="w-full rounded-xl bg-[#050810] border border-[#21262d] pl-9 pr-4 py-2 text-xs text-white placeholder-[#484f58] outline-none focus:border-[#238636] transition"
               />
             </div>
 
@@ -585,7 +585,7 @@ export default function HistoryPage() {
               <select
                 value={operatorFilter}
                 onChange={(e) => setOperatorFilter(e.target.value)}
-                className="rounded-xl bg-slate-950 border border-slate-800 px-3 py-2 text-xs text-white outline-none focus:border-emerald-500"
+                className="rounded-xl bg-[#050810] border border-[#21262d] px-3 py-2 text-xs text-white outline-none focus:border-[#238636]"
               >
                 <option value="all">All Networks</option>
                 <option value="Jazz">Jazz / Mobilink</option>
@@ -598,7 +598,7 @@ export default function HistoryPage() {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="rounded-xl bg-slate-950 border border-slate-800 px-3 py-2 text-xs text-white outline-none focus:border-emerald-500"
+                className="rounded-xl bg-[#050810] border border-[#21262d] px-3 py-2 text-xs text-white outline-none focus:border-[#238636]"
               >
                 <option value="all">All Statuses</option>
                 <option value="delivered">Delivered</option>
@@ -609,7 +609,7 @@ export default function HistoryPage() {
               <select
                 value={pageSize}
                 onChange={(e) => setPageSize(Number(e.target.value))}
-                className="rounded-xl bg-slate-950 border border-slate-800 px-3 py-2 text-xs text-white outline-none focus:border-emerald-500"
+                className="rounded-xl bg-[#050810] border border-[#21262d] px-3 py-2 text-xs text-white outline-none focus:border-[#238636]"
               >
                 {PAGE_SIZE_OPTIONS.map((n) => (
                   <option key={n} value={n}>
@@ -620,21 +620,21 @@ export default function HistoryPage() {
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-3 items-center justify-between border-t border-slate-800/60 pt-3">
-            <div className="flex items-center gap-2 text-xs text-slate-400 w-full sm:w-auto">
+          <div className="flex flex-col sm:flex-row gap-3 items-center justify-between border-t border-[#21262d] pt-3">
+            <div className="flex items-center gap-2 text-xs text-[#7d8590] w-full sm:w-auto">
               <span className="shrink-0">Date range:</span>
               <input
                 type="date"
                 value={dateFrom}
                 onChange={(e) => setDateFrom(e.target.value)}
-                className="rounded-lg bg-slate-950 border border-slate-800 px-2 py-1.5 text-xs text-white outline-none focus:border-emerald-500"
+                className="rounded-lg bg-[#050810] border border-[#21262d] px-2 py-1.5 text-xs text-white outline-none focus:border-[#238636]"
               />
               <span>to</span>
               <input
                 type="date"
                 value={dateTo}
                 onChange={(e) => setDateTo(e.target.value)}
-                className="rounded-lg bg-slate-950 border border-slate-800 px-2 py-1.5 text-xs text-white outline-none focus:border-emerald-500"
+                className="rounded-lg bg-[#050810] border border-[#21262d] px-2 py-1.5 text-xs text-white outline-none focus:border-[#238636]"
               />
             </div>
 
@@ -642,7 +642,7 @@ export default function HistoryPage() {
               <button
                 type="button"
                 onClick={resetFilters}
-                className="flex items-center gap-1 text-xs font-semibold text-slate-400 hover:text-white transition"
+                className="flex items-center gap-1 text-xs font-semibold text-[#7d8590] hover:text-white transition"
               >
                 <X className="h-3 w-3" />
                 Clear filters
@@ -661,7 +661,7 @@ export default function HistoryPage() {
               <button
                 type="button"
                 onClick={handleExportSelected}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 border border-slate-800 text-slate-200 hover:text-white transition"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#161b22] border border-[#21262d] text-[#e6edf3] hover:text-white transition"
               >
                 <Download className="h-3.5 w-3.5" />
                 Export Selected
@@ -669,7 +669,7 @@ export default function HistoryPage() {
               <button
                 type="button"
                 onClick={clearSelection}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 border border-slate-800 text-slate-300 hover:text-white transition"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#161b22] border border-[#21262d] text-[#c9d1d9] hover:text-white transition"
               >
                 <X className="h-3.5 w-3.5" />
                 Deselect All
@@ -679,12 +679,12 @@ export default function HistoryPage() {
         )}
 
         {/* Messages Table */}
-        <div className="rounded-2xl border border-slate-800/80 bg-slate-900/60 overflow-hidden backdrop-blur-md">
+        <div className="rounded-xl bg-[#0d1117] border border-[#21262d] overflow-hidden">
           {sortedMessages.length === 0 ? (
             <div className="py-16 text-center">
-              <History className="h-8 w-8 text-slate-600 mx-auto mb-2" />
-              <p className="text-sm font-medium text-slate-300">No message records found</p>
-              <p className="text-xs text-slate-500 mt-1">
+              <History className="h-8 w-8 text-[#30363d] mx-auto mb-2" />
+              <p className="text-sm font-medium text-[#c9d1d9]">No message records found</p>
+              <p className="text-xs text-[#484f58] mt-1">
                 {messages.length === 0
                   ? "Messages sent via Single Test SMS or Bulk Campaign will appear here."
                   : "Try clearing your search query or adjusting filters."}
@@ -695,13 +695,13 @@ export default function HistoryPage() {
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs">
                   <thead>
-                    <tr className="border-b border-slate-800 bg-slate-950/60 text-slate-400">
+                    <tr className="border-b border-[#21262d] bg-[#161b22] text-[#7d8590]">
                       <th className="py-3 px-4 w-10">
                         <button type="button" onClick={togglePageSelectAll} className="flex items-center">
                           {isAllPageSelected ? (
                             <CheckSquare className="h-4 w-4 text-emerald-400" />
                           ) : (
-                            <Square className="h-4 w-4 text-slate-600" />
+                            <Square className="h-4 w-4 text-[#30363d]" />
                           )}
                         </button>
                       </th>
@@ -714,7 +714,7 @@ export default function HistoryPage() {
                       <th className="py-3 px-4 font-semibold text-right">Details</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-800/60">
+                  <tbody className="divide-y divide-[#21262d]">
                     {paginatedMessages.map((msg) => {
                       const origStatus = originalStatuses[msg.id];
                       const hasChanged = origStatus && origStatus !== msg.status;
@@ -722,7 +722,7 @@ export default function HistoryPage() {
                       return (
                         <tr
                           key={msg.id}
-                          className={`hover:bg-slate-800/40 transition cursor-pointer ${
+                          className={`hover:bg-[#161b22] transition cursor-pointer ${
                             hasChanged ? "bg-amber-500/5" : ""
                           } ${isSelected ? "bg-emerald-500/5" : ""}`}
                         >
@@ -731,19 +731,19 @@ export default function HistoryPage() {
                               {isSelected ? (
                                 <CheckSquare className="h-4 w-4 text-emerald-400" />
                               ) : (
-                                <Square className="h-4 w-4 text-slate-600" />
+                                <Square className="h-4 w-4 text-[#30363d]" />
                               )}
                             </button>
                           </td>
                           <td className="py-3 px-4 font-bold text-white" onClick={() => setSelectedMessage(msg)}>
                             <div>{msg.nationalPhone || msg.phone}</div>
-                            <div className="text-[10px] text-slate-500 font-normal">{msg.phone}</div>
+                            <div className="text-[10px] text-[#484f58] font-normal">{msg.phone}</div>
                           </td>
                           <td className="py-3 px-4" onClick={() => setSelectedMessage(msg)}>
                             <OperatorBadge operator={msg.operator} size="sm" />
                           </td>
                           <td
-                            className="py-3 px-4 max-w-sm truncate text-slate-300"
+                            className="py-3 px-4 max-w-sm truncate text-[#c9d1d9]"
                             title={msg.text}
                             onClick={() => setSelectedMessage(msg)}
                           >
@@ -760,11 +760,11 @@ export default function HistoryPage() {
                               <StatusBadge status={msg.status} stateText={msg.status} size="sm" />
                             )}
                           </td>
-                          <td className="py-3 px-4 text-slate-400" onClick={() => setSelectedMessage(msg)}>
+                          <td className="py-3 px-4 text-[#7d8590]" onClick={() => setSelectedMessage(msg)}>
                             SIM {msg.simNumber || 1}
                           </td>
                           <td
-                            className="py-3 px-4 text-slate-400 text-[11px] whitespace-nowrap"
+                            className="py-3 px-4 text-[#7d8590] text-[11px] whitespace-nowrap"
                             onClick={() => setSelectedMessage(msg)}
                           >
                             {msg.timestamp ? new Date(msg.timestamp).toLocaleString() : "--"}
@@ -786,15 +786,15 @@ export default function HistoryPage() {
               </div>
 
               {/* Pagination footer */}
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-slate-800/60 px-4 py-3">
-                <span className="text-[11px] text-slate-500">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-[#21262d] px-4 py-3">
+                <span className="text-[11px] text-[#484f58]">
                   Showing{" "}
-                  <span className="text-slate-300 font-semibold">
+                  <span className="text-[#c9d1d9] font-semibold">
                     {(currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, sortedMessages.length)}
                   </span>{" "}
-                  of <span className="text-slate-300 font-semibold">{sortedMessages.length}</span> messages
+                  of <span className="text-[#c9d1d9] font-semibold">{sortedMessages.length}</span> messages
                   {sortedMessages.length !== messages.length && (
-                    <span className="text-slate-600"> (filtered from {messages.length})</span>
+                    <span className="text-[#30363d]"> (filtered from {messages.length})</span>
                   )}
                 </span>
 
@@ -803,18 +803,18 @@ export default function HistoryPage() {
                     type="button"
                     onClick={() => setPage((p) => Math.max(1, p - 1))}
                     disabled={currentPage <= 1}
-                    className="flex items-center justify-center h-7 w-7 rounded-lg bg-slate-950 border border-slate-800 text-slate-300 hover:text-white disabled:opacity-40 transition"
+                    className="flex items-center justify-center h-7 w-7 rounded-lg bg-[#050810] border border-[#21262d] text-[#c9d1d9] hover:text-white disabled:opacity-40 transition"
                   >
                     <ChevronLeft className="h-3.5 w-3.5" />
                   </button>
-                  <span className="text-[11px] text-slate-400 px-2 font-mono">
+                  <span className="text-[11px] text-[#7d8590] px-2 font-mono">
                     {currentPage} / {totalPages}
                   </span>
                   <button
                     type="button"
                     onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                     disabled={currentPage >= totalPages}
-                    className="flex items-center justify-center h-7 w-7 rounded-lg bg-slate-950 border border-slate-800 text-slate-300 hover:text-white disabled:opacity-40 transition"
+                    className="flex items-center justify-center h-7 w-7 rounded-lg bg-[#050810] border border-[#21262d] text-[#c9d1d9] hover:text-white disabled:opacity-40 transition"
                   >
                     <ChevronRight className="h-3.5 w-3.5" />
                   </button>
@@ -831,19 +831,19 @@ export default function HistoryPage() {
         const hasChanged = origStatus && origStatus !== selectedMessage.status;
         return (
           <div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#161b22] backdrop-blur-sm"
             onClick={() => setSelectedMessage(null)}
           >
             <div
-              className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto"
+              className="w-full max-w-md rounded-xl border border-[#21262d] bg-[#161b22] p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center justify-between border-b border-[#21262d] pb-3">
                 <h3 className="text-sm font-bold text-white">Message Log Details</h3>
                 <button
                   type="button"
                   onClick={() => setSelectedMessage(null)}
-                  className="text-slate-400 hover:text-white"
+                  className="text-[#7d8590] hover:text-white"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -851,24 +851,24 @@ export default function HistoryPage() {
 
               <div className="space-y-3 text-xs">
                 <div className="flex justify-between items-center">
-                  <span className="text-slate-400">Recipient Phone:</span>
+                  <span className="text-[#7d8590]">Recipient Phone:</span>
                   <div className="flex items-center gap-1.5">
                     <span className="font-semibold text-white">{selectedMessage.phone}</span>
                     <button
                       type="button"
                       onClick={() => copyToClipboard(selectedMessage.phone, "Phone number")}
-                      className="text-slate-500 hover:text-emerald-400 transition"
+                      className="text-[#484f58] hover:text-emerald-400 transition"
                     >
                       <Copy className="h-3 w-3" />
                     </button>
                   </div>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-400">National Format:</span>
+                  <span className="text-[#7d8590]">National Format:</span>
                   <span className="font-semibold text-white">{selectedMessage.nationalPhone || "--"}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-slate-400">Network Operator:</span>
+                  <span className="text-[#7d8590]">Network Operator:</span>
                   <OperatorBadge operator={selectedMessage.operator} size="sm" />
                 </div>
 
@@ -876,33 +876,33 @@ export default function HistoryPage() {
                   <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3 space-y-2">
                     <p className="text-amber-400 font-semibold text-[11px] uppercase tracking-wide">Status Changed This Session</p>
                     <div className="flex items-center justify-between">
-                      <span className="text-slate-400">Original Status:</span>
+                      <span className="text-[#7d8590]">Original Status:</span>
                       <StatusBadge status={origStatus} stateText={origStatus} size="sm" />
                     </div>
                     <div className="flex items-center justify-center">
                       <ArrowRight className="h-4 w-4 text-amber-400" />
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-slate-400">Current Status:</span>
+                      <span className="text-[#7d8590]">Current Status:</span>
                       <StatusBadge status={selectedMessage.status} stateText={selectedMessage.status} size="sm" />
                     </div>
                   </div>
                 ) : (
                   <div className="flex justify-between items-center">
-                    <span className="text-slate-400">Delivery Status:</span>
+                    <span className="text-[#7d8590]">Delivery Status:</span>
                     <StatusBadge status={selectedMessage.status} size="sm" />
                   </div>
                 )}
 
                 <div className="flex justify-between items-center">
-                  <span className="text-slate-400">Gateway Message ID:</span>
+                  <span className="text-[#7d8590]">Gateway Message ID:</span>
                   <div className="flex items-center gap-1.5">
                     <span className="font-mono text-emerald-400">{selectedMessage.gatewayId || "N/A"}</span>
                     {selectedMessage.gatewayId && (
                       <button
                         type="button"
                         onClick={() => copyToClipboard(selectedMessage.gatewayId!, "Gateway ID")}
-                        className="text-slate-500 hover:text-emerald-400 transition"
+                        className="text-[#484f58] hover:text-emerald-400 transition"
                       >
                         <Copy className="h-3 w-3" />
                       </button>
@@ -910,11 +910,11 @@ export default function HistoryPage() {
                   </div>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-400">SIM Slot Used:</span>
+                  <span className="text-[#7d8590]">SIM Slot Used:</span>
                   <span className="text-white">SIM {selectedMessage.simNumber || 1}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-400">Dispatched At:</span>
+                  <span className="text-[#7d8590]">Dispatched At:</span>
                   <span className="text-white">
                     {selectedMessage.timestamp ? new Date(selectedMessage.timestamp).toLocaleString() : "--"}
                   </span>
@@ -929,20 +929,20 @@ export default function HistoryPage() {
 
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-slate-400">Message Content:</span>
+                    <span className="text-[#7d8590]">Message Content:</span>
                     <button
                       type="button"
                       onClick={() => copyToClipboard(selectedMessage.text, "Message text")}
-                      className="flex items-center gap-1 text-slate-500 hover:text-emerald-400 transition text-[11px]"
+                      className="flex items-center gap-1 text-[#484f58] hover:text-emerald-400 transition text-[11px]"
                     >
                       <Copy className="h-3 w-3" />
                       Copy
                     </button>
                   </div>
-                  <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-slate-200 whitespace-pre-wrap leading-relaxed">
+                  <div className="p-3 rounded-xl bg-[#050810] border border-[#21262d] text-[#e6edf3] whitespace-pre-wrap leading-relaxed">
                     {selectedMessage.text}
                   </div>
-                  <div className="text-[10px] text-slate-500 mt-1 text-right">
+                  <div className="text-[10px] text-[#484f58] mt-1 text-right">
                     {selectedMessage.text.length} characters ·{" "}
                     {Math.ceil(selectedMessage.text.length / 160)} SMS segment
                     {Math.ceil(selectedMessage.text.length / 160) > 1 ? "s" : ""}
@@ -954,7 +954,7 @@ export default function HistoryPage() {
                 <button
                   type="button"
                   onClick={() => setSelectedMessage(null)}
-                  className="px-4 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-white transition"
+                  className="px-4 py-1.5 rounded-lg bg-[#21262d] hover:bg-[#21262d] text-xs font-semibold text-white transition"
                 >
                   Close
                 </button>
@@ -987,7 +987,7 @@ function SortableHeader({
         {sortField === field ? (
           <ArrowUpDown className="h-3 w-3 text-emerald-400" />
         ) : (
-          <ArrowUpDown className="h-3 w-3 text-slate-600" />
+          <ArrowUpDown className="h-3 w-3 text-[#30363d]" />
         )}
       </button>
     </th>
@@ -1006,19 +1006,19 @@ function StatCard({
   tone: "slate" | "emerald" | "amber" | "rose" | "sky";
 }) {
   const toneMap: Record<string, string> = {
-    slate: "text-slate-300 bg-slate-800/60 border-slate-700/60",
+    slate: "text-[#c9d1d9] bg-[#161b22] border-[#30363d]",
     emerald: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
     amber: "text-amber-400 bg-amber-500/10 border-amber-500/20",
     rose: "text-rose-400 bg-rose-500/10 border-rose-500/20",
     sky: "text-sky-400 bg-sky-500/10 border-sky-500/20",
   };
   return (
-    <div className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-4 backdrop-blur-md">
+    <div className="rounded-xl bg-[#0d1117] border border-[#21262d] p-4">
       <div className={`inline-flex items-center justify-center h-8 w-8 rounded-lg border mb-2 ${toneMap[tone]}`}>
         {icon}
       </div>
       <div className="text-lg font-extrabold text-white tabular-nums">{value}</div>
-      <div className="text-[11px] text-slate-500">{label}</div>
+      <div className="text-[11px] text-[#484f58]">{label}</div>
     </div>
   );
 }

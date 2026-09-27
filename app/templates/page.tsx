@@ -39,7 +39,7 @@ const CATEGORIES: CategoryMeta[] = [
   { id: "event", label: "Events & Invites", aliases: ["event", "events"], color: "fuchsia", badgeBg: "bg-fuchsia-500/10 text-fuchsia-400 border-fuchsia-500/20" },
   { id: "realestate", label: "Real Estate", aliases: ["realestate"], color: "cyan", badgeBg: "bg-cyan-500/10 text-cyan-400 border-cyan-500/20" },
   { id: "bank", label: "Banking & Finance", aliases: ["bank", "banking"], color: "amber", badgeBg: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20" },
-  { id: "custom", label: "Custom", aliases: ["custom"], color: "slate", badgeBg: "bg-slate-700/50 text-slate-300 border-slate-600" },
+  { id: "custom", label: "Custom", aliases: ["custom"], color: "slate", badgeBg: "bg-[#21262d]/50 text-[#c9d1d9] border-[#30363d]" },
 ];
 
 function getCategoryBadge(category: string): { label: string; badgeClass: string } {
@@ -48,7 +48,7 @@ function getCategoryBadge(category: string): { label: string; badgeClass: string
   if (match) {
     return { label: match.label, badgeClass: match.badgeBg };
   }
-  return { label: category, badgeClass: "bg-slate-800 text-slate-400 border-slate-700" };
+  return { label: category, badgeClass: "bg-[#21262d] text-[#7d8590] border-[#30363d]" };
 }
 
 export default function TemplatesPage() {
@@ -167,9 +167,9 @@ export default function TemplatesPage() {
   const currentAttrs = calculateSMSAttributes(text);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 pb-24">
+    <div className="min-h-screen bg-[#050810] text-[#e6edf3] pb-24">
       {/* Top Header */}
-      <div className="border-b border-slate-800/60 bg-gradient-to-r from-slate-950 via-slate-900/60 to-slate-950 py-6 px-4 sm:px-6">
+      <div className="border-b border-[#21262d] bg-[#0d1117] py-5 px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
@@ -184,7 +184,7 @@ export default function TemplatesPage() {
                   MongoDB Synced ({mongoStats?.templates ?? templates.length})
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-800 text-slate-400 border border-slate-700">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#21262d] text-[#7d8590] border border-[#30363d]">
                   <Database className="h-2.5 w-2.5" />
                   Local Memory Mode
                 </span>
@@ -194,7 +194,7 @@ export default function TemplatesPage() {
             <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-white">
               Pakistani SMS Templates Library
             </h1>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <p className="text-xs text-[#7d8590] mt-0.5">
               120+ high-converting ready-to-use templates: Flash Sales, Order Confirmations, WhatsApp Support, OTPs, Reminders, and Urdu Alerts.
             </p>
           </div>
@@ -205,7 +205,7 @@ export default function TemplatesPage() {
               onClick={handleSyncToMongo}
               disabled={isSyncing}
               title="Reseed / sync all preset templates into MongoDB"
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-slate-900 text-slate-200 border border-slate-700/80 hover:bg-slate-800 hover:text-white transition disabled:opacity-50"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-[#161b22] text-[#e6edf3] border border-[#30363d]/80 hover:bg-[#21262d] hover:text-white transition disabled:opacity-50"
             >
               <RefreshCw className={`h-3.5 w-3.5 text-emerald-400 ${isSyncing ? "animate-spin" : ""}`} />
               <span>{isSyncing ? "Syncing..." : "Sync to DB"}</span>
@@ -223,24 +223,24 @@ export default function TemplatesPage() {
         </div>
       </div>
 
-      <main className="mx-auto max-w-7xl px-4 sm:px-6 pt-6 space-y-6">
+      <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
         {/* Search & Filter Bar */}
         <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
           {/* Search Input */}
           <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#7d8590]" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search templates by keyword, title, or {variable}..."
-              className="w-full rounded-xl bg-slate-900/80 border border-slate-800 pl-9 pr-4 py-2 text-xs text-white placeholder-slate-500 outline-none focus:border-purple-500 transition"
+              className="w-full rounded-xl bg-[#0d1117] border border-[#21262d] pl-9 pr-4 py-2 text-xs text-white placeholder-[#484f58] outline-none focus:border-purple-500 transition"
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={() => setSearchQuery("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 hover:text-slate-300"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#484f58] hover:text-[#c9d1d9]"
               >
                 &times;
               </button>
@@ -248,7 +248,7 @@ export default function TemplatesPage() {
           </div>
 
           {/* Result counter */}
-          <div className="text-xs text-slate-400 flex items-center gap-2">
+          <div className="text-xs text-[#7d8590] flex items-center gap-2">
             <span>Showing <strong className="text-white">{filteredTemplates.length}</strong> of {templates.length} templates</span>
           </div>
         </div>
@@ -267,14 +267,14 @@ export default function TemplatesPage() {
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition shrink-0 ${
                   isActive
                     ? "bg-purple-500/20 text-purple-300 border border-purple-500/40 shadow-sm"
-                    : "bg-slate-900 text-slate-400 border border-slate-800 hover:text-white hover:border-slate-700"
+                    : "bg-[#161b22] text-[#7d8590] border border-[#21262d] hover:text-white hover:border-[#30363d]"
                 }`}
               >
                 <span>{cat.label}</span>
                 {count > 0 && (
                   <span
                     className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
-                      isActive ? "bg-purple-500/30 text-purple-200" : "bg-slate-800 text-slate-400"
+                      isActive ? "bg-purple-500/30 text-purple-200" : "bg-[#21262d] text-[#7d8590]"
                     }`}
                   >
                     {count}
@@ -287,10 +287,10 @@ export default function TemplatesPage() {
 
         {/* Empty Search Results */}
         {filteredTemplates.length === 0 && (
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-12 text-center space-y-3">
-            <FileText className="h-8 w-8 text-slate-600 mx-auto" />
+          <div className="rounded-xl bg-[#0d1117] border border-[#21262d] p-12 text-center space-y-3">
+            <FileText className="h-8 w-8 text-[#30363d] mx-auto" />
             <h3 className="text-sm font-bold text-white">No templates found</h3>
-            <p className="text-xs text-slate-400 max-w-sm mx-auto">
+            <p className="text-xs text-[#7d8590] max-w-sm mx-auto">
               No templates match your search query &ldquo;{searchQuery}&rdquo;. Try another keyword or switch category filter.
             </p>
             <button
@@ -299,7 +299,7 @@ export default function TemplatesPage() {
                 setSearchQuery("");
                 setCategoryFilter("all");
               }}
-              className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 text-slate-200 hover:bg-slate-700 transition"
+              className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-[#21262d] text-[#e6edf3] hover:bg-[#21262d] transition"
             >
               Reset Filters
             </button>
@@ -315,7 +315,7 @@ export default function TemplatesPage() {
             return (
               <div
                 key={tpl.id}
-                className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-5 backdrop-blur-md flex flex-col justify-between hover:border-slate-700 hover:shadow-lg hover:shadow-purple-950/10 transition group"
+                className="rounded-xl bg-[#0d1117] border border-[#21262d] p-5 flex flex-col justify-between hover:border-[#30363d] hover:shadow-lg hover:shadow-purple-950/10 transition group"
               >
                 <div>
                   <div className="flex items-center justify-between gap-2 mb-2">
@@ -332,7 +332,7 @@ export default function TemplatesPage() {
                       <button
                         type="button"
                         onClick={() => deleteTemplate(tpl.id)}
-                        className="text-slate-500 hover:text-rose-400 p-1 transition"
+                        className="text-[#484f58] hover:text-rose-400 p-1 transition"
                         title="Delete custom template"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
@@ -344,7 +344,7 @@ export default function TemplatesPage() {
                     {tpl.name}
                   </h3>
 
-                  <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800/80 text-xs text-slate-300 leading-relaxed min-h-[90px] whitespace-pre-wrap select-text font-sans">
+                  <div className="p-3.5 rounded-xl bg-[#161b22] border border-[#21262d] text-xs text-[#c9d1d9] leading-relaxed min-h-[90px] whitespace-pre-wrap select-text font-sans">
                     {tpl.text}
                   </div>
 
@@ -354,7 +354,7 @@ export default function TemplatesPage() {
                       {tpl.variables.map((v) => (
                         <span
                           key={v}
-                          className="px-1.5 py-0.5 rounded bg-slate-800/90 text-[10px] font-mono text-emerald-400 border border-slate-700/60"
+                          className="px-1.5 py-0.5 rounded bg-[#21262d]/90 text-[10px] font-mono text-emerald-400 border border-[#30363d]"
                         >
                           {`{${v}}`}
                         </span>
@@ -363,18 +363,18 @@ export default function TemplatesPage() {
                   )}
 
                   {/* Segment and character badge */}
-                  <div className="mt-3 flex items-center justify-between text-[11px] text-slate-500 border-t border-slate-800/60 pt-2">
+                  <div className="mt-3 flex items-center justify-between text-[11px] text-[#484f58] border-t border-[#21262d] pt-2">
                     <span>{attrs.charCount} characters</span>
                     <span className="text-emerald-400 font-medium">{attrs.segments} segment(s)</span>
                   </div>
                 </div>
 
                 {/* Actions: Copy, Test, Use Bulk */}
-                <div className="mt-4 pt-3 border-t border-slate-800/60 flex items-center justify-between gap-2">
+                <div className="mt-4 pt-3 border-t border-[#21262d] flex items-center justify-between gap-2">
                   <button
                     type="button"
                     onClick={() => handleCopyText(tpl)}
-                    className="flex items-center gap-1 text-xs text-slate-400 hover:text-white px-2.5 py-1.5 rounded-lg bg-slate-800/60 hover:bg-slate-800 transition"
+                    className="flex items-center gap-1 text-xs text-[#7d8590] hover:text-white px-2.5 py-1.5 rounded-lg bg-[#161b22] hover:bg-[#21262d] transition"
                   >
                     {copiedId === tpl.id ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
                     <span>{copiedId === tpl.id ? "Copied" : "Copy"}</span>
@@ -384,7 +384,7 @@ export default function TemplatesPage() {
                     {/* TEST BUTTON WITH EXACT TEMPLATE ID */}
                     <Link
                       href={`/test-sms?templateId=${encodeURIComponent(tpl.id)}`}
-                      className="flex items-center gap-1 text-xs text-slate-300 hover:text-white px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 transition"
+                      className="flex items-center gap-1 text-xs text-[#c9d1d9] hover:text-white px-2.5 py-1.5 rounded-lg bg-[#21262d] hover:bg-[#21262d] transition"
                       title="Test this template with a single phone number"
                     >
                       <Zap className="h-3 w-3 text-amber-400" />
@@ -410,9 +410,9 @@ export default function TemplatesPage() {
 
       {/* Create Template Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-          <div className="w-full max-w-lg rounded-2xl border border-slate-800 bg-slate-900 p-6 space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#161b22] backdrop-blur-sm">
+          <div className="w-full max-w-lg rounded-xl border border-[#21262d] bg-[#161b22] p-6 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[#21262d] pb-3">
               <h3 className="text-sm font-bold text-white flex items-center gap-2">
                 <Sparkles className="h-4 w-4 text-purple-400" />
                 Create Custom SMS Template
@@ -420,7 +420,7 @@ export default function TemplatesPage() {
               <button
                 type="button"
                 onClick={() => setShowCreateModal(false)}
-                className="text-slate-400 hover:text-white text-lg leading-none"
+                className="text-[#7d8590] hover:text-white text-lg leading-none"
               >
                 &times;
               </button>
@@ -428,23 +428,23 @@ export default function TemplatesPage() {
 
             <form onSubmit={handleCreateTemplate} className="space-y-4 text-xs">
               <div>
-                <label className="text-slate-400 block mb-1">Template Name</label>
+                <label className="text-[#7d8590] block mb-1">Template Name</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. Eid Mega Sale Offer"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2 text-white outline-none focus:border-purple-500"
+                  className="w-full rounded-xl bg-[#050810] border border-[#21262d] px-3 py-2 text-white outline-none focus:border-purple-500"
                 />
               </div>
 
               <div>
-                <label className="text-slate-400 block mb-1">Category</label>
+                <label className="text-[#7d8590] block mb-1">Category</label>
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value as any)}
-                  className="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2 text-white outline-none focus:border-purple-500"
+                  className="w-full rounded-xl bg-[#050810] border border-[#21262d] px-3 py-2 text-white outline-none focus:border-purple-500"
                 >
                   <option value="promo">Promotions & Sales (promo)</option>
                   <option value="txn">Orders & Transactional (txn)</option>
@@ -462,14 +462,14 @@ export default function TemplatesPage() {
 
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <label className="text-slate-400">Template Text</label>
+                  <label className="text-[#7d8590]">Template Text</label>
                   <div className="flex flex-wrap gap-1">
                     {["name", "link", "order_id", "amount", "code", "discount"].map((tag) => (
                       <button
                         key={tag}
                         type="button"
                         onClick={() => handleInsertToken(tag)}
-                        className="px-1.5 py-0.5 bg-slate-800 text-purple-300 rounded text-[10px] font-mono hover:bg-slate-700"
+                        className="px-1.5 py-0.5 bg-[#21262d] text-purple-300 rounded text-[10px] font-mono hover:bg-[#21262d]"
                       >
                         +{`{${tag}}`}
                       </button>
@@ -483,10 +483,10 @@ export default function TemplatesPage() {
                   placeholder="Salam {name}! Exclusive offer on our store: {link}..."
                   value={text}
                   onChange={(e) => setText(e.target.value)}
-                  className="w-full rounded-xl bg-slate-950 border border-slate-800 p-3 text-white outline-none focus:border-purple-500 leading-relaxed font-sans"
+                  className="w-full rounded-xl bg-[#050810] border border-[#21262d] p-3 text-white outline-none focus:border-purple-500 leading-relaxed font-sans"
                 />
 
-                <div className="flex items-center justify-between text-[11px] text-slate-500 mt-1">
+                <div className="flex items-center justify-between text-[11px] text-[#484f58] mt-1">
                   <span>{currentAttrs.charCount} chars &bull; {currentAttrs.segments} segment(s)</span>
                   <span>{currentAttrs.encoding}</span>
                 </div>
@@ -496,7 +496,7 @@ export default function TemplatesPage() {
                 <button
                   type="button"
                   onClick={() => setShowCreateModal(false)}
-                  className="px-3.5 py-2 rounded-xl bg-slate-800 text-slate-300 hover:text-white"
+                  className="px-3.5 py-2 rounded-xl bg-[#21262d] text-[#c9d1d9] hover:text-white"
                 >
                   Cancel
                 </button>

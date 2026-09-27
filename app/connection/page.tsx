@@ -148,9 +148,9 @@ export default function ConnectionPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 pb-24">
+    <div className="min-h-screen bg-[#050810] text-[#e6edf3] pb-24">
       {/* Top Header */}
-      <div className="border-b border-slate-800/60 bg-gradient-to-r from-slate-950 via-slate-900/60 to-slate-950 py-6 px-4 sm:px-6">
+      <div className="border-b border-[#21262d] bg-[#0d1117] py-5 px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
@@ -162,7 +162,7 @@ export default function ConnectionPage() {
             <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-white">
               Gateway & MongoDB Connection Center
             </h1>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <p className="text-xs text-[#7d8590] mt-0.5">
               Connect your Android phone running sms-gate.app, test live authentication, and configure MongoDB storage.
             </p>
           </div>
@@ -181,7 +181,7 @@ export default function ConnectionPage() {
         </div>
       </div>
 
-      <main className="mx-auto max-w-7xl px-4 sm:px-6 pt-6 space-y-6">
+      <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* Left: Gateway Settings Form (7 cols) */}
           <div className="lg:col-span-7 space-y-6">
@@ -191,7 +191,7 @@ export default function ConnectionPage() {
                 ? "bg-emerald-950/30 border-emerald-500/30"
                 : activeGatewayUsername
                 ? "bg-amber-950/20 border-amber-500/20"
-                : "bg-slate-900/60 border-slate-800/80"
+                : "bg-[#0d1117] border-[#21262d]"
             }`}>
               <div className="flex items-center gap-3">
                 <div className={`flex h-9 w-9 items-center justify-center rounded-xl border shrink-0 ${
@@ -199,7 +199,7 @@ export default function ConnectionPage() {
                     ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40"
                     : activeGatewayUsername
                     ? "bg-amber-500/15 text-amber-400 border-amber-500/30"
-                    : "bg-slate-800 text-slate-400 border-slate-700"
+                    : "bg-[#21262d] text-[#7d8590] border-[#30363d]"
                 }`}>
                   {isGatewayOnline === true ? (
                     <ShieldCheck className="h-4 w-4" />
@@ -208,7 +208,7 @@ export default function ConnectionPage() {
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">
+                  <div className="text-[10px] text-[#7d8590] uppercase tracking-wider font-semibold">
                     Your Active Connection
                   </div>
                   {activeGatewayUsername ? (
@@ -216,13 +216,13 @@ export default function ConnectionPage() {
                       <div className="text-sm font-bold text-white truncate">
                         {gatewayConfig.name || activeGatewayUsername}
                       </div>
-                      <div className="text-[11px] text-slate-400 font-mono">
+                      <div className="text-[11px] text-[#7d8590] font-mono">
                         Login: <span className="text-emerald-400">{activeGatewayUsername}</span>
                         {gatewayConfig.simNumber ? ` • SIM ${gatewayConfig.simNumber}` : ""}
                       </div>
                     </>
                   ) : (
-                    <div className="text-sm text-slate-400">
+                    <div className="text-sm text-[#7d8590]">
                       No gateway configured yet — enter your credentials below.
                     </div>
                   )}
@@ -232,7 +232,7 @@ export default function ConnectionPage() {
                     ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
                     : isGatewayOnline === false
                     ? "bg-rose-500/10 text-rose-400 border-rose-500/30"
-                    : "bg-slate-800 text-slate-400 border-slate-700"
+                    : "bg-[#21262d] text-[#7d8590] border-[#30363d]"
                 }`}>
                   {isGatewayOnline === true
                     ? `Online • ${gatewayLatency}ms`
@@ -244,7 +244,7 @@ export default function ConnectionPage() {
             </div>
 
             {/* 1. Android Gateway Settings Form */}
-            <div className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-5 backdrop-blur-md space-y-4">
+            <div className="rounded-xl bg-[#0d1117] border border-[#21262d] p-5 space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
                   <Smartphone className="h-4 w-4 text-emerald-400" />
@@ -257,7 +257,7 @@ export default function ConnectionPage() {
                       ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
                       : isGatewayOnline === false
                       ? "bg-rose-500/10 text-rose-400 border-rose-500/30"
-                      : "bg-slate-800 text-slate-400 border-slate-700"
+                      : "bg-[#21262d] text-[#7d8590] border-[#30363d]"
                   }`}
                 >
                   {isGatewayOnline === true
@@ -268,23 +268,23 @@ export default function ConnectionPage() {
                 </span>
               </div>
 
-              <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800 text-xs text-slate-400">
+              <div className="p-3 rounded-xl bg-[#161b22] border border-[#21262d] text-xs text-[#7d8590]">
                 Enter your Android gateway credentials below. They are tested live before being saved — only you can access your own connection.
               </div>
 
               <form onSubmit={handleSaveGateway} className="space-y-4 text-xs">
                 {/* Username */}
                 <div>
-                  <label className="text-slate-400 block mb-1">Gateway Username</label>
+                  <label className="text-[#7d8590] block mb-1">Gateway Username</label>
                   <input
                     type="text"
                     required
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     placeholder="e.g. A1B2C3"
-                    className="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2 text-white font-mono outline-none focus:border-emerald-500"
+                    className="w-full rounded-xl bg-[#050810] border border-[#21262d] px-3 py-2 text-white font-mono outline-none focus:border-[#238636]"
                   />
-                  <span className="text-[10px] text-slate-500 mt-1 block">
+                  <span className="text-[10px] text-[#484f58] mt-1 block">
                     Found in your Android app under Cloud Server &rarr; Login.
                   </span>
                 </div>
@@ -292,11 +292,11 @@ export default function ConnectionPage() {
                 {/* Password */}
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <label className="text-slate-400">Gateway Password</label>
+                    <label className="text-[#7d8590]">Gateway Password</label>
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="text-slate-400 hover:text-white flex items-center gap-1 text-[11px]"
+                      className="text-[#7d8590] hover:text-white flex items-center gap-1 text-[11px]"
                     >
                       {showPassword ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
                       <span>{showPassword ? "Hide" : "Show"}</span>
@@ -308,7 +308,7 @@ export default function ConnectionPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Enter Android gateway password..."
-                    className="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2 text-white font-mono outline-none focus:border-emerald-500"
+                    className="w-full rounded-xl bg-[#050810] border border-[#21262d] px-3 py-2 text-white font-mono outline-none focus:border-[#238636]"
                   />
                 </div>
 
@@ -317,29 +317,29 @@ export default function ConnectionPage() {
                 {/* Device ID and SIM Slot */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-slate-400 block mb-1">Device ID </label>
+                    <label className="text-[#7d8590] block mb-1">Device ID </label>
                     <input
                       type="text"
                       value={deviceId}
                       required
                       onChange={(e) => setDeviceId(e.target.value)}
                       placeholder="e.g. G3dhj75T987F3ertfgw&4"
-                      className="w-full rounded-xl bg-slate-950 border border-slate-800 px-3 py-2 text-white font-mono outline-none focus:border-emerald-500"
+                      className="w-full rounded-xl bg-[#050810] border border-[#21262d] px-3 py-2 text-white font-mono outline-none focus:border-[#238636]"
                     />
-                    <span className="text-[10px] text-slate-500 mt-1 block">
+                    <span className="text-[10px] text-[#484f58] mt-1 block">
                       Required only if multiple phones share the same gateway account.
                     </span>
                   </div>
 
                   <div>
-                    <label className="text-slate-400 block mb-1">Default SIM Card Slot</label>
+                    <label className="text-[#7d8590] block mb-1">Default SIM Card Slot</label>
                     <div className="flex gap-2">
                       <button
                         type="button"
                         onClick={() => setSimNumber(1)}
                         className={`flex-1 py-2 rounded-xl font-bold border transition ${simNumber === 1
                           ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40"
-                          : "bg-slate-950 border-slate-800 text-slate-400"
+                          : "bg-[#050810] border-[#21262d] text-[#7d8590]"
                           }`}
                       >
                         SIM 1
@@ -349,7 +349,7 @@ export default function ConnectionPage() {
                         onClick={() => setSimNumber(2)}
                         className={`flex-1 py-2 rounded-xl font-bold border transition ${simNumber === 2
                           ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40"
-                          : "bg-slate-950 border-slate-800 text-slate-400"
+                          : "bg-[#050810] border-[#21262d] text-[#7d8590]"
                           }`}
                       >
                         SIM 2
@@ -391,7 +391,7 @@ export default function ConnectionPage() {
                 </div>
                 <p className="leading-relaxed">{diagnosticsResult.message}</p>
                 {diagnosticsResult.latency && (
-                  <span className="text-[11px] text-slate-400 block">
+                  <span className="text-[11px] text-[#7d8590] block">
                     Roundtrip Latency: {diagnosticsResult.latency} ms
                   </span>
                 )}
@@ -399,7 +399,7 @@ export default function ConnectionPage() {
             )}
 
             {/* 2. MongoDB Database Configuration */}
-            <div className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-5 backdrop-blur-md space-y-4">
+            <div className="rounded-xl bg-[#0d1117] border border-[#21262d] p-5 space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
                   <Database className="h-4 w-4 text-emerald-400" />
@@ -415,20 +415,20 @@ export default function ConnectionPage() {
 
               {isMongoConnected && mongoStats && (
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-                  <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800">
-                    <span className="text-[10px] text-slate-500 block">Messages</span>
+                  <div className="p-2.5 rounded-xl bg-[#050810] border border-[#21262d]">
+                    <span className="text-[10px] text-[#484f58] block">Messages</span>
                     <span className="font-bold text-white">{mongoStats.messages}</span>
                   </div>
-                  <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800">
-                    <span className="text-[10px] text-slate-500 block">Campaigns</span>
+                  <div className="p-2.5 rounded-xl bg-[#050810] border border-[#21262d]">
+                    <span className="text-[10px] text-[#484f58] block">Campaigns</span>
                     <span className="font-bold text-white">{mongoStats.campaigns}</span>
                   </div>
-                  <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800">
-                    <span className="text-[10px] text-slate-500 block">Contacts</span>
+                  <div className="p-2.5 rounded-xl bg-[#050810] border border-[#21262d]">
+                    <span className="text-[10px] text-[#484f58] block">Contacts</span>
                     <span className="font-bold text-white">{mongoStats.contacts}</span>
                   </div>
-                  <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800">
-                    <span className="text-[10px] text-slate-500 block">Templates</span>
+                  <div className="p-2.5 rounded-xl bg-[#050810] border border-[#21262d]">
+                    <span className="text-[10px] text-[#484f58] block">Templates</span>
                     <span className="font-bold text-white">{mongoStats.templates}</span>
                   </div>
                 </div>
@@ -438,13 +438,13 @@ export default function ConnectionPage() {
             </div>
 
             {/* 3. System Backup & Export */}
-            <div className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-5 backdrop-blur-md space-y-3">
+            <div className="rounded-xl bg-[#0d1117] border border-[#21262d] p-5 space-y-3">
               <span className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
                 <HardDrive className="h-4 w-4 text-emerald-400" />
                 Data Backup & Migration
               </span>
 
-              <p className="text-xs text-slate-400 leading-relaxed">
+              <p className="text-xs text-[#7d8590] leading-relaxed">
                 Export all your contacts, custom templates, campaign history, and configuration into a portable JSON backup file.
               </p>
 
@@ -454,7 +454,7 @@ export default function ConnectionPage() {
 
           {/* Right: Step-by-Step Android Setup Guide (5 cols) */}
           <div className="lg:col-span-5 space-y-4">
-            <div className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-5 backdrop-blur-md space-y-4">
+            <div className="rounded-xl bg-[#0d1117] border border-[#21262d] p-5 space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
                   <Smartphone className="h-4 w-4 text-emerald-400" />
@@ -478,7 +478,7 @@ export default function ConnectionPage() {
                   </div>
                   <div>
                     <h4 className="font-bold text-white">Install Android Gateway</h4>
-                    <p className="text-slate-400 mt-0.5 leading-relaxed">
+                    <p className="text-[#7d8590] mt-0.5 leading-relaxed">
                       Download and install the APK on an Android device with an active Pakistani SIM card (Jazz, Zong, Telenor, Onic, SCOM or Ufone). SMS Package
                     </p>
                   </div>
@@ -490,7 +490,7 @@ export default function ConnectionPage() {
                   </div>
                   <div>
                     <h4 className="font-bold text-white">Enable Cloud Server</h4>
-                    <p className="text-slate-400 mt-0.5 leading-relaxed">
+                    <p className="text-[#7d8590] mt-0.5 leading-relaxed">
                       Toggle <strong>Cloud Server: ON</strong> in the app. It will display a random Username, Password and Device ID on your phone screen.
                     </p>
                   </div>
@@ -502,7 +502,7 @@ export default function ConnectionPage() {
                   </div>
                   <div>
                     <h4 className="font-bold text-white">Copy Credentials Here</h4>
-                    <p className="text-slate-400 mt-0.5 leading-relaxed">
+                    <p className="text-[#7d8590] mt-0.5 leading-relaxed">
                       Paste the exact Login and Password into the form on the left, then click <strong>Test Connection</strong>.
                     </p>
                   </div>
@@ -514,7 +514,7 @@ export default function ConnectionPage() {
                   </div>
                   <div>
                     <h4 className="font-bold text-white">Battery Optimization Warning</h4>
-                    <p className="text-slate-400 mt-0.5 leading-relaxed">
+                    <p className="text-[#7d8590] mt-0.5 leading-relaxed">
                       In Android Settings &rarr; Apps &rarr; SMS Gateway, select <strong>Battery &rarr; Unrestricted</strong> so Android doesn&apos;t sleep the gateway service during bulk campaigns.
                     </p>
                   </div>

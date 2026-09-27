@@ -178,9 +178,9 @@ function TestSmsInner() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 pb-24">
+    <div className="min-h-screen bg-[#050810] text-[#e6edf3] pb-24">
       {/* Top Header */}
-      <div className="border-b border-slate-800/60 bg-gradient-to-r from-slate-950 via-slate-900/60 to-slate-950 py-6 px-4 sm:px-6">
+      <div className="border-b border-[#21262d] bg-[#0d1117] py-5 px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
@@ -192,7 +192,7 @@ function TestSmsInner() {
             <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-white">
               Single SMS & Validation Studio
             </h1>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <p className="text-xs text-[#7d8590] mt-0.5">
               Strict Pakistani mobile validation, carrier detection, character count, and real-time smartphone rendering.
             </p>
           </div>
@@ -201,7 +201,7 @@ function TestSmsInner() {
             <button
               type="button"
               onClick={() => testGatewayConnection()}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-900 border border-slate-800 text-slate-300 hover:text-white"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-[#161b22] border border-[#21262d] text-[#c9d1d9] hover:text-white"
             >
               <RefreshCw className="h-3.5 w-3.5" />
               <span>Ping Gateway</span>
@@ -215,7 +215,7 @@ function TestSmsInner() {
           {/* Left Form: inputs and controls (7 cols) */}
           <div className="lg:col-span-7 space-y-6">
             {/* 1. Recipient Phone Input */}
-            <div className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-5 backdrop-blur-md space-y-4">
+            <div className="rounded-xl bg-[#0d1117] border border-[#21262d] p-5 space-y-4">
               <div className="flex items-center justify-between">
                 <label className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
                   <Smartphone className="h-4 w-4 text-emerald-400" />
@@ -232,10 +232,10 @@ function TestSmsInner() {
                   value={phoneNumber}
                   onChange={(e) => setPhoneNumber(e.target.value)}
                   placeholder="03001234567 or +923001234567"
-                  className={`w-full rounded-xl border px-3.5 py-2.5 text-sm font-mono text-white placeholder-slate-500 outline-none transition ${
+                  className={`w-full rounded-xl border px-3.5 py-2.5 text-sm font-mono text-white placeholder-[#484f58] outline-none transition ${
                     phoneValidation.isValid
-                      ? "border-emerald-500/40 bg-slate-950/80 focus:border-emerald-400"
-                      : "border-rose-500/40 bg-slate-950/80 focus:border-rose-400"
+                      ? "border-emerald-500/40 bg-[#161b22] focus:border-emerald-400"
+                      : "border-rose-500/40 bg-[#161b22] focus:border-rose-400"
                   }`}
                 />
               </div>
@@ -275,7 +275,7 @@ function TestSmsInner() {
             </div>
 
             {/* 2. Message Content */}
-            <div className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-5 backdrop-blur-md space-y-4">
+            <div className="rounded-xl bg-[#0d1117] border border-[#21262d] p-5 space-y-4">
               <div className="flex items-center justify-between gap-2 flex-wrap">
                 <label className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
                   <MessageSquare className="h-4 w-4 text-emerald-400" />
@@ -292,7 +292,7 @@ function TestSmsInner() {
                   <button
                     type="button"
                     onClick={() => setShowUtmHelper(!showUtmHelper)}
-                    className="text-[11px] font-medium text-slate-300 hover:text-emerald-400 flex items-center gap-1 px-2 py-1 rounded-md bg-slate-800 border border-slate-700 transition"
+                    className="text-[11px] font-medium text-[#c9d1d9] hover:text-emerald-400 flex items-center gap-1 px-2 py-1 rounded-md bg-[#21262d] border border-[#30363d] transition"
                   >
                     <LinkIcon className="h-3 w-3" />
                     UTM Link
@@ -301,7 +301,7 @@ function TestSmsInner() {
                   <button
                     type="button"
                     onClick={() => setShowWaHelper(!showWaHelper)}
-                    className="text-[11px] font-medium text-slate-300 hover:text-emerald-400 flex items-center gap-1 px-2 py-1 rounded-md bg-slate-800 border border-slate-700 transition"
+                    className="text-[11px] font-medium text-[#c9d1d9] hover:text-emerald-400 flex items-center gap-1 px-2 py-1 rounded-md bg-[#21262d] border border-[#30363d] transition"
                   >
                     <ExternalLink className="h-3 w-3" />
                     WhatsApp Link
@@ -311,7 +311,7 @@ function TestSmsInner() {
 
               {/* UTM Helper Panel */}
               {showUtmHelper && (
-                <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-2 text-xs">
+                <div className="p-3 rounded-xl bg-[#050810] border border-[#21262d] space-y-2 text-xs">
                   <span className="font-bold text-white block">Add Website Link with Tracking</span>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                     <input
@@ -319,28 +319,28 @@ function TestSmsInner() {
                       placeholder="Target URL"
                       value={utmUrl}
                       onChange={(e) => setUtmUrl(e.target.value)}
-                      className="rounded-lg bg-slate-900 border border-slate-700 px-2 py-1 text-xs text-white"
+                      className="rounded-lg bg-[#161b22] border border-[#30363d] px-2 py-1 text-xs text-white"
                     />
                     <input
                       type="text"
                       placeholder="utm_source (e.g. sms)"
                       value={utmSource}
                       onChange={(e) => setUtmSource(e.target.value)}
-                      className="rounded-lg bg-slate-900 border border-slate-700 px-2 py-1 text-xs text-white"
+                      className="rounded-lg bg-[#161b22] border border-[#30363d] px-2 py-1 text-xs text-white"
                     />
                     <input
                       type="text"
                       placeholder="utm_campaign"
                       value={utmCampaign}
                       onChange={(e) => setUtmCampaign(e.target.value)}
-                      className="rounded-lg bg-slate-900 border border-slate-700 px-2 py-1 text-xs text-white"
+                      className="rounded-lg bg-[#161b22] border border-[#30363d] px-2 py-1 text-xs text-white"
                     />
                   </div>
                   <div className="flex justify-end gap-2 pt-1">
                     <button
                       type="button"
                       onClick={() => setShowUtmHelper(false)}
-                      className="px-2.5 py-1 text-slate-400 hover:text-white"
+                      className="px-2.5 py-1 text-[#7d8590] hover:text-white"
                     >
                       Cancel
                     </button>
@@ -357,7 +357,7 @@ function TestSmsInner() {
 
               {/* WhatsApp Helper Panel */}
               {showWaHelper && (
-                <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-2 text-xs">
+                <div className="p-3 rounded-xl bg-[#050810] border border-[#21262d] space-y-2 text-xs">
                   <span className="font-bold text-white block">Insert WhatsApp Direct Click-to-Chat</span>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <input
@@ -365,21 +365,21 @@ function TestSmsInner() {
                       placeholder="WhatsApp Mobile (e.g. 03001234567)"
                       value={waNumber}
                       onChange={(e) => setWaNumber(e.target.value)}
-                      className="rounded-lg bg-slate-900 border border-slate-700 px-2 py-1 text-xs text-white"
+                      className="rounded-lg bg-[#161b22] border border-[#30363d] px-2 py-1 text-xs text-white"
                     />
                     <input
                       type="text"
                       placeholder="Pre-filled greeting"
                       value={waPrefill}
                       onChange={(e) => setWaPrefill(e.target.value)}
-                      className="rounded-lg bg-slate-900 border border-slate-700 px-2 py-1 text-xs text-white"
+                      className="rounded-lg bg-[#161b22] border border-[#30363d] px-2 py-1 text-xs text-white"
                     />
                   </div>
                   <div className="flex justify-end gap-2 pt-1">
                     <button
                       type="button"
                       onClick={() => setShowWaHelper(false)}
-                      className="px-2.5 py-1 text-slate-400 hover:text-white"
+                      className="px-2.5 py-1 text-[#7d8590] hover:text-white"
                     >
                       Cancel
                     </button>
@@ -400,33 +400,33 @@ function TestSmsInner() {
                   value={messageText}
                   onChange={(e) => setMessageText(e.target.value)}
                   placeholder="Enter message text here..."
-                  className="w-full rounded-xl border border-slate-800 bg-slate-950/80 p-3.5 text-sm text-white placeholder-slate-500 outline-none focus:border-emerald-500/50 transition font-sans leading-relaxed"
+                  className="w-full rounded-xl border border-[#21262d] bg-[#161b22] p-3.5 text-sm text-white placeholder-[#484f58] outline-none focus:border-[#238636]/50 transition font-sans leading-relaxed"
                 />
               </div>
 
               {/* GSM / Segment Metrics Pill Bar */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-                <div className="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800">
-                  <span className="text-[10px] text-slate-500 block">Length</span>
-                  <span className="font-bold text-slate-200">
+                <div className="p-2.5 rounded-xl bg-[#161b22] border border-[#21262d]">
+                  <span className="text-[10px] text-[#484f58] block">Length</span>
+                  <span className="font-bold text-[#e6edf3]">
                     {smsAttrs.charCount} characters
                   </span>
                 </div>
-                <div className="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800">
-                  <span className="text-[10px] text-slate-500 block">SMS Segments</span>
+                <div className="p-2.5 rounded-xl bg-[#161b22] border border-[#21262d]">
+                  <span className="text-[10px] text-[#484f58] block">SMS Segments</span>
                   <span className="font-bold text-emerald-400">
                     {smsAttrs.segments} {smsAttrs.segments === 1 ? "part" : "parts"}
                   </span>
                 </div>
-                <div className="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800">
-                  <span className="text-[10px] text-slate-500 block">Encoding</span>
-                  <span className={`font-semibold ${smsAttrs.hasUnicode ? "text-amber-400" : "text-slate-300"}`}>
+                <div className="p-2.5 rounded-xl bg-[#161b22] border border-[#21262d]">
+                  <span className="text-[10px] text-[#484f58] block">Encoding</span>
+                  <span className={`font-semibold ${smsAttrs.hasUnicode ? "text-amber-400" : "text-[#c9d1d9]"}`}>
                     {smsAttrs.encoding}
                   </span>
                 </div>
-                <div className="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800">
-                  <span className="text-[10px] text-slate-500 block">Remaining in Segment</span>
-                  <span className="font-bold text-slate-300">
+                <div className="p-2.5 rounded-xl bg-[#161b22] border border-[#21262d]">
+                  <span className="text-[10px] text-[#484f58] block">Remaining in Segment</span>
+                  <span className="font-bold text-[#c9d1d9]">
                     {smsAttrs.remainingInCurrentSegment}
                   </span>
                 </div>
@@ -435,7 +435,7 @@ function TestSmsInner() {
               {/* SIM Selection & Send Action */}
               <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <span className="text-xs text-slate-400 font-medium">SIM Slot:</span>
+                  <span className="text-xs text-[#7d8590] font-medium">SIM Slot:</span>
                   <div className="flex items-center gap-1.5">
                     <button
                       type="button"
@@ -443,7 +443,7 @@ function TestSmsInner() {
                       className={`px-3 py-1 rounded-lg text-xs font-semibold border transition ${
                         selectedSim === 1
                           ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40"
-                          : "bg-slate-950 border-slate-800 text-slate-400 hover:text-white"
+                          : "bg-[#050810] border-[#21262d] text-[#7d8590] hover:text-white"
                       }`}
                     >
                       SIM 1
@@ -454,7 +454,7 @@ function TestSmsInner() {
                       className={`px-3 py-1 rounded-lg text-xs font-semibold border transition ${
                         selectedSim === 2
                           ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40"
-                          : "bg-slate-950 border-slate-800 text-slate-400 hover:text-white"
+                          : "bg-[#050810] border-[#21262d] text-[#7d8590] hover:text-white"
                       }`}
                     >
                       SIM 2
@@ -466,7 +466,7 @@ function TestSmsInner() {
                   type="button"
                   onClick={handleSendTest}
                   disabled={isSending || !phoneValidation.isValid}
-                  className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-bold text-sm shadow-lg shadow-emerald-600/20 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-lg shadow-emerald-600/20 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Send className={`h-4 w-4 ${isSending ? "animate-spin" : ""}`} />
                   <span>{isSending ? "Dispatching to Gateway..." : "Send Test SMS Now"}</span>
@@ -476,16 +476,16 @@ function TestSmsInner() {
 
             {/* 3. Gateway Diagnostics & Response Inspector */}
             {lastResponse && (
-              <div className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-5 backdrop-blur-md space-y-3">
+              <div className="rounded-xl bg-[#0d1117] border border-[#21262d] p-5 space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
                     <FileCode className="h-4 w-4 text-emerald-400" />
                     Gateway Raw Response Inspector
                   </span>
-                  <span className="text-[10px] text-slate-500">Live JSON payload</span>
+                  <span className="text-[10px] text-[#484f58]">Live JSON payload</span>
                 </div>
 
-                <pre className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 text-xs font-mono text-emerald-400/90 overflow-x-auto max-h-56">
+                <pre className="p-3.5 rounded-xl bg-[#050810] border border-[#21262d] text-xs font-mono text-emerald-400/90 overflow-x-auto max-h-56">
                   {JSON.stringify(lastResponse, null, 2)}
                 </pre>
               </div>
@@ -496,10 +496,10 @@ function TestSmsInner() {
           <div className="lg:col-span-5 flex flex-col items-center">
             <div className="sticky top-24 w-full flex flex-col items-center">
               <div className="mb-2 text-center">
-                <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+                <h3 className="text-xs font-bold text-[#c9d1d9] uppercase tracking-wider">
                   Live Recipient Simulator
                 </h3>
-                <p className="text-[11px] text-slate-500">Real-time Pakistani mobile view</p>
+                <p className="text-[11px] text-[#484f58]">Real-time Pakistani mobile view</p>
               </div>
 
               <PhonePreview
@@ -518,7 +518,7 @@ function TestSmsInner() {
 
 export default function TestSmsPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-slate-950 flex items-center justify-center"><div className="text-slate-400 text-sm">Loading...</div></div>}>
+    <Suspense fallback={<div className="min-h-screen bg-[#050810] flex items-center justify-center"><div className="text-[#7d8590] text-sm">Loading...</div></div>}>
       <TestSmsInner />
     </Suspense>
   );

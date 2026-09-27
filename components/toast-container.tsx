@@ -5,87 +5,49 @@ import { CheckCircle2, AlertCircle, AlertTriangle, Info, X } from "lucide-react"
 
 export function ToastContainer() {
   const { toasts, removeToast } = useSms();
-
   if (toasts.length === 0) return null;
 
   return (
-    <div className="fixed top-5 right-5 z-50 flex flex-col gap-2.5 max-w-sm w-full pointer-events-none px-4 sm:px-0">
-      <style>{`
-        @keyframes toastCountdown {
-          from { width: 100%; }
-          to { width: 0%; }
-        }
-      `}</style>
+    <div className="fixed bottom-6 right-4 z-[200] flex flex-col-reverse gap-2 max-w-[360px] w-full sm:right-6 pointer-events-none">
       {toasts.map((toast) => {
         const isSuccess = toast.type === "success";
-        const isDanger = toast.type === "danger";
+        const isDanger  = toast.type === "danger";
         const isWarning = toast.type === "warning";
 
-        const borderClass = isSuccess
-          ? "border-emerald-500/40 bg-slate-900/95"
-          : isDanger
-          ? "border-rose-500/40 bg-slate-900/95"
-          : isWarning
-          ? "border-amber-500/40 bg-slate-900/95"
-          : "border-sky-500/40 bg-slate-900/95";
-
-        const timerClass = isSuccess
-          ? "bg-emerald-400"
-          : isDanger
-          ? "bg-rose-400"
-          : isWarning
-          ? "bg-amber-400"
-          : "bg-sky-400";
-
-        const Icon = isSuccess
-          ? CheckCircle2
-          : isDanger
-          ? AlertCircle
-          : isWarning
-          ? AlertTriangle
-          : Info;
-
-        const iconColor = isSuccess
-          ? "text-emerald-400"
-          : isDanger
-          ? "text-rose-400"
-          : isWarning
-          ? "text-amber-400"
-          : "text-sky-400";
+        const accent  = isDanger ? "#f85149" : isWarning ? "#e3b341" : isSuccess ? "#3fb950" : "#388bfd";
+        const iconBg  = isDanger ? "bg-rose-500/10" : isWarning ? "bg-amber-500/10" : isSuccess ? "bg-emerald-500/10" : "bg-blue-500/10";
+        const Icon    = isDanger ? AlertCircle : isWarning ? AlertTriangle : isSuccess ? CheckCircle2 : Info;
+        const timer   = isDanger ? "bg-rose-500" : isWarning ? "bg-amber-400" : isSuccess ? "bg-emerald-400" : "bg-blue-400";
 
         return (
           <div
             key={toast.id}
-            className={`pointer-events-auto relative overflow-hidden rounded-xl border p-3.5 shadow-2xl shadow-black/60 backdrop-blur-md transition-all duration-300 ${borderClass}`}
+            className="pointer-events-auto relative overflow-hidden rounded-xl border bg-[#161b22] shadow-2xl shadow-black/60 animate-toast-in"
+            style={{ borderColor: `${accent}40` }}
           >
-            <div className="flex items-start gap-3">
-              <div className="mt-0.5 shrink-0">
-                <Icon className={`h-5 w-5 ${iconColor}`} />
+            <div className="flex items-start gap-3 px-4 py-3.5">
+              <div className={`mt-0.5 shrink-0 flex h-7 w-7 items-center justify-center rounded-lg ${iconBg}`}>
+                <Icon className="h-4 w-4" style={{ color: accent }} />
               </div>
-              <div className="flex-1 min-w-0 pr-4">
+              <div className="flex-1 min-w-0 pr-6">
                 {toast.title && (
-                  <h4 className="text-xs font-bold text-white tracking-wide">{toast.title}</h4>
+                  <p className="text-sm font-semibold text-white leading-tight">{toast.title}</p>
                 )}
-                <p className="text-xs text-slate-300 mt-0.5 leading-relaxed break-words">
-                  {toast.message}
-                </p>
+                <p className="text-xs text-[#7d8590] mt-0.5 leading-relaxed break-words">{toast.message}</p>
               </div>
               <button
                 type="button"
                 onClick={() => removeToast(toast.id)}
-                className="text-slate-400 hover:text-white p-1 rounded-md transition-colors shrink-0"
+                className="absolute top-3 right-3 text-[#484f58] hover:text-white p-1 rounded transition-colors"
               >
-                <X className="h-4 w-4" />
+                <X className="h-3.5 w-3.5" />
               </button>
             </div>
-
-            {/* Countdown timer bar */}
-            <div className="absolute bottom-0 left-0 right-0 h-1 bg-slate-800">
+            {/* Countdown bar */}
+            <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#21262d]">
               <div
-                className={`h-full ${timerClass}`}
-                style={{
-                  animation: `toastCountdown ${toast.durationMs}ms linear forwards`,
-                }}
+                className={`h-full ${timer}`}
+                style={{ animation: `toastCountdown ${toast.durationMs}ms linear forwards` }}
               />
             </div>
           </div>
