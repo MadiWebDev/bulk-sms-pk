@@ -23,8 +23,12 @@ import { getDatabase } from "@/lib/mongodb";
 import { validatePakistanPhone } from "@/lib/pakistan-phone";
 
 export const runtime = "nodejs";
-// Allow this route up to 30 minutes — long enough for a 5000-message campaign
-export const maxDuration = 1800;
+// maxDuration only applies on Vercel Pro/Enterprise (≥60s).
+// On free plan (10s limit) long campaigns will be cut off server-side —
+// but the loop still progresses message-by-message and checkpoints to MongoDB,
+// so the browser re-triggers the next batch on each poll.
+// On self-hosted / local `next start` there is no timeout at all.
+export const maxDuration = 60; // safe cap — won't error on free plan but won't exceed Pro limit either
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
